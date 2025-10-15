@@ -1,20 +1,15 @@
 export interface User {
-  // Start with the basic required fields
+  id?: string; // Document ID from Firestore
   name: string;
   email: string;
   role: "admin" | "teacher" | "student"; 
-  identificationNumber: number;
+  identificationNumber: string; // Changed from number to string for easier handling
   phoneNumber: string;
-  accountStatus: "active"|"graduated"|"deferred";
-  dateJoined: Date;
-  dateCompleted?: Date;
+  accountStatus: "active" | "inactive" | "suspended";
+  dateJoined: string; // Changed from Date to string for easier serialization
+  dateCompleted?: string;
   department?: string;
   courses?: string[];
-  courseCode: number;
+  courseCode?: string;
   isEmailVerified: boolean;
-
-  // Think: what are the 3 possible values?  
-  // Continue with the rest...
-  // Remember: some fields might be optional (use ?)
-  // Think about the data types for each field
 }

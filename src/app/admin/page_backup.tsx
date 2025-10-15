@@ -3,17 +3,16 @@
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { getStudentsCount, getTeachersCount } from "@/lib/firebaseServices";
 import AdminLogin from "@/components/auth/AdminLogin";
-import DashboardLayout from "@/components/ui/DashboardLayout";
-import { Card, StatCard } from "@/components/ui/Card";
+import DashboardLayout from "../../../components/ui/DashboardLayout";
+import { Card, StatCard } from "../../../components/ui/Card";
 
 const adminSidebarItems = [
   { name: "Intelligence Hub", href: "/admin", icon: "📊" },
   { name: "Students", href: "/admin/students", icon: "👥" },
   { name: "Teachers", href: "/admin/teachers", icon: "👨‍🏫" },
   { name: "Classes", href: "/admin/classes", icon: "🏫" },
-  { name: "Analytics", href: "/admin/analytics", icon: "📈" },
+  { name: "Analytics", href: "/admin/analytics", icon: "�" },
   { name: "Predictive Reports", href: "/admin/reports", icon: "🎯" },
   { name: "Settings", href: "/admin/settings", icon: "⚙️" },
 ];
@@ -21,34 +20,15 @@ const adminSidebarItems = [
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [studentsCount, setStudentsCount] = useState(0);
-  const [teachersCount, setTeachersCount] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsAuthenticated(!!user);
       setLoading(false);
-      
-      if (user) {
-        loadDashboardData();
-      }
     });
 
     return () => unsubscribe();
   }, []);
-
-  const loadDashboardData = async () => {
-    try {
-      const [students, teachers] = await Promise.all([
-        getStudentsCount(),
-        getTeachersCount(),
-      ]);
-      setStudentsCount(students);
-      setTeachersCount(teachers);
-    } catch (error) {
-      console.error("Error loading dashboard data:", error);
-    }
-  };
 
   if (loading) {
     return (
@@ -78,10 +58,10 @@ export default function AdminPage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Total Students" value={studentsCount.toString()} icon="👥" color="blue" />
-          <StatCard title="Total Teachers" value={teachersCount.toString()} icon="👨‍🏫" color="green" />
-          <StatCard title="Active Classes" value="0" icon="🏫" color="yellow" />
-          <StatCard title="Risk Predictions" value="Pending" icon="🎯" color="red" />
+          <StatCard title="Total Students" value="1,234" icon="👥" color="blue" />
+          <StatCard title="Total Teachers" value="45" icon="👨‍🏫" color="green" />
+          <StatCard title="Active Classes" value="28" icon="🏫" color="yellow" />
+          <StatCard title="Risk Predictions" value="89%" icon="🎯" color="red" />
         </div>
 
         {/* Main Content Grid */}
@@ -104,7 +84,7 @@ export default function AdminPage() {
                 </div>
               </div>
               <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <span className="text-blue-600">📊</span>
+                <span className="text-blue-600">�</span>
                 <div>
                   <p className="text-sm font-medium">Predictive model updated</p>
                   <p className="text-xs text-gray-500">Physics 201 - Pattern analysis complete - 1 hour ago</p>
@@ -116,27 +96,21 @@ export default function AdminPage() {
           {/* Quick Actions */}
           <Card title="Intelligence Actions">
             <div className="grid grid-cols-1 gap-3">
-              <button 
-                onClick={() => window.location.href = '/admin/students'}
-                className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg text-left transition-colors"
-              >
+              <button className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg text-left transition-colors">
                 <div className="flex items-center space-x-3">
                   <span className="text-2xl">👥</span>
                   <div>
-                    <p className="font-medium text-blue-900">Manage Students</p>
-                    <p className="text-sm text-blue-600">View and manage {studentsCount} students</p>
+                    <p className="font-medium text-blue-900">Add New Student</p>
+                    <p className="text-sm text-blue-600">Register with analytics tracking</p>
                   </div>
                 </div>
               </button>
-              <button 
-                onClick={() => window.location.href = '/admin/teachers'}
-                className="p-4 bg-green-50 hover:bg-green-100 rounded-lg text-left transition-colors"
-              >
+              <button className="p-4 bg-green-50 hover:bg-green-100 rounded-lg text-left transition-colors">
                 <div className="flex items-center space-x-3">
                   <span className="text-2xl">👨‍🏫</span>
                   <div>
-                    <p className="font-medium text-green-900">Manage Teachers</p>
-                    <p className="text-sm text-green-600">View and manage {teachersCount} teachers</p>
+                    <p className="font-medium text-green-900">Add New Teacher</p>
+                    <p className="text-sm text-green-600">Enable analytics access</p>
                   </div>
                 </div>
               </button>
@@ -181,12 +155,12 @@ export default function AdminPage() {
                 <span className="text-green-600 text-sm">✅ Running</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Total Users</span>
-                <span className="text-gray-600 text-sm">{studentsCount + teachersCount}</span>
+                <span className="text-sm font-medium">Last Analysis</span>
+                <span className="text-gray-600 text-sm">2 hours ago</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Risk Assessments</span>
-                <span className="text-blue-600 text-sm">Pending Setup</span>
+                <span className="text-blue-600 text-sm">234 processed</span>
               </div>
             </div>
           </Card>

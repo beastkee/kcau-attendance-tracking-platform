@@ -174,3 +174,114 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
 
 // - deleteUser
 // - getAllUsers
+// Delete user
+export const deleteUser = async (userId: string): Promise<void> => {
+  try {
+    const docRef = doc(db, 'users', userId);
+    await deleteDoc(docRef);
+    console.log('User deleted with ID:', userId);
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    throw new Error('Failed to delete user');
+  }
+};
+
+// Get all users with optional role filter
+export const getAllUsers = async (roleFilter?: string): Promise<User[]> => {
+  try {
+    const usersRef = collection(db, 'users');
+    let q;
+    
+    if (roleFilter) {
+      q = query(usersRef, where('role', '==', roleFilter));
+    } else {
+      q = query(usersRef);
+    }
+    
+    const querySnapshot = await getDocs(q);
+    const users: User[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      users.push({ id: doc.id, ...doc.data() } as User);
+    });
+    
+    return users;
+  } catch (error) {
+    console.error('Error getting users:', error);
+    throw new Error('Failed to get users');
+  }
+};
+
+// Get users by role (students or teachers)
+export const getUsersByRole = async (role: 'student' | 'teacher' | 'admin'): Promise<User[]> => {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('role', '==', role));
+    
+    const querySnapshot = await getDocs(q);
+    const users: User[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      users.push({ id: doc.id, ...doc.data() } as User);
+    });
+    
+    console.log(`Found ${users.length} ${role}s`);
+    return users;
+  } catch (error) {
+    console.error(`Error getting ${role}s:`, error);
+    throw new Error(`Failed to get ${role}s`);
+  }
+};
+
+// Get students count
+export const getStudentsCount = async (): Promise<number> => {
+  try {
+    const students = await getUsersByRole('student');
+    return students.length;
+  } catch (error) {
+    console.error('Error getting students count:', error);
+    return 0;
+  }
+};
+
+// Get teachers count
+export const getTeachersCount = async (): Promise<number> => {
+  try {
+    const teachers = await getUsersByRole('teacher');
+    return teachers.length;
+  } catch (error) {
+    console.error('Error getting teachers count:', error);
+    return 0;
+  }
+};
+
+// Get user by email
+export const getUserByEmail = async (email: string): Promise<User | null> => {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('email', '==', email));
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return null;
+    }
+    
+    const doc = querySnapshot.docs[0];
+    return { id: doc.id, ...doc.data() } as User;
+  } catch (error) {
+    console.error('Error getting user by email:', error);
+    throw new Error('Failed to get user by email');
+  }
+};
+
+// Update user account status
+export const updateUserStatus = async (userId: string, status: 'active' | 'inactive' | 'suspended'): Promise<void> => {
+  try {
+    await updateUser(userId, { accountStatus: status });
+    console.log(`User ${userId} status updated to ${status}`);
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    throw new Error('Failed to update user status');
+  }
+};
