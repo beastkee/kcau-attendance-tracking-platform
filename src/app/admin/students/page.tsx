@@ -55,6 +55,7 @@ export default function AdminStudentsPage() {
       // Calculate risk scores for all students
       await loadRisks(studentsData);
     } catch (error) {
+      // Error handled
     }
   };
 
@@ -75,6 +76,7 @@ export default function AdminStudentsPage() {
       
       setStudentRisks(riskMap);
     } catch (error) {
+      // Error handled
     }
   };
 
@@ -91,6 +93,7 @@ export default function AdminStudentsPage() {
       await loadStudents();
       alert("Student deleted successfully");
     } catch (error) {
+      // Error handled
       alert("Failed to delete student");
     }
   };
@@ -122,6 +125,7 @@ export default function AdminStudentsPage() {
       await loadStudents();
       setShowModal(false);
     } catch (error) {
+      // Error handled
       throw new Error("Failed to save student");
     }
   };

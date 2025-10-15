@@ -36,6 +36,7 @@ export default function Home() {
         router.push(`/${selectedRole}`);
       }
     } catch (error) {
+      // Error handled
       setError("Invalid email or password");
     } finally {
       setLoading(false);

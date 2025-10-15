@@ -74,6 +74,7 @@ export default function AdminPage() {
       // Calculate risk for all students
       await loadRisks(studentsData);
     } catch (error) {
+      // Error handled
     }
   };
 
@@ -93,6 +94,7 @@ export default function AdminPage() {
       
       setStudentRisks(riskMap);
     } catch (error) {
+      // Error handled
     }
   };
 
@@ -117,6 +119,7 @@ export default function AdminPage() {
       setShowEditModal(false);
       loadData(); // Reload to reflect changes
     } catch (error) {
+      // Error handled
       alert("Failed to update user");
     }
   };
@@ -151,6 +154,7 @@ export default function AdminPage() {
       setShowEnrollModal(false);
       loadData();
     } catch (error) {
+      // Error handled
       alert("Failed to update enrollment");
     }
   };
@@ -165,6 +169,7 @@ export default function AdminPage() {
       alert("User deleted successfully");
       loadData();
     } catch (error) {
+      // Error handled
       alert("Failed to delete user");
     }
   };

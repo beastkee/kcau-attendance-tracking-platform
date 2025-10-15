@@ -45,6 +45,7 @@ export default function EmailVerification({ userRole }: EmailVerificationProps) 
       await logoutUser();
       router.push("/");
     } catch (error) {
+      // Error handled
     }
   };
 

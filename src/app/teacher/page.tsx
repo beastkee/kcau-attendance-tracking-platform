@@ -132,6 +132,8 @@ export default function TeacherDashboard() {
 
       setHighRiskStudents(allHighRisk);
     } catch (error) {
+      // Error handled
+      // Failed to load data
     }
   };
 

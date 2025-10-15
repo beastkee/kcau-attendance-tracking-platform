@@ -1,7 +1,7 @@
 "use client";
 
-import DashboardLayout from "../../../components/ui/DashboardLayout";
-import { Card, StatCard } from "../../../components/ui/Card";
+import DashboardLayout from "@/components/ui/DashboardLayout";
+import { Card, StatCard } from "@/components/ui/Card";
 
 const studentSidebarItems = [
   { name: "Dashboard", href: "/student", icon: "📊" },

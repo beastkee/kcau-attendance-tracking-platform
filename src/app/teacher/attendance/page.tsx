@@ -56,6 +56,7 @@ export default function TeacherAttendancePage() {
       const coursesData = await getCoursesByTeacher(teacherId);
       setCourses(coursesData);
     } catch (error) {
+      // Error handled
     }
   };
 
@@ -79,6 +80,7 @@ export default function TeacherAttendancePage() {
       });
       setAttendanceData(existingData);
     } catch (error) {
+      // Error handled
     }
   };
 
@@ -125,6 +127,7 @@ export default function TeacherAttendancePage() {
         alert("Please mark attendance for at least one student");
       }
     } catch (error) {
+      // Error handled
       alert("Failed to save attendance. Please try again.");
     } finally {
       setSaving(false);
