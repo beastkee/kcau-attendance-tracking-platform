@@ -26,7 +26,7 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
@@ -38,7 +38,7 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-white rounded-xl shadow-xl p-8 border border-gray-100">
           <h2 className="text-xl font-semibold text-center text-gray-800 mb-6">
             Admin Login
           </h2>

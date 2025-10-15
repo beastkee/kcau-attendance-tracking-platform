@@ -72,7 +72,7 @@ export default function RegisterForm({ role, onBack, onSuccess }: RegisterFormPr
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-8">
+    <div className="bg-white rounded-xl shadow-xl p-8 border border-gray-100">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-800 capitalize">
           Register as {role}
@@ -102,7 +102,7 @@ export default function RegisterForm({ role, onBack, onSuccess }: RegisterFormPr
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
               required
             />
           </div>
@@ -116,7 +116,7 @@ export default function RegisterForm({ role, onBack, onSuccess }: RegisterFormPr
               name="identificationNumber"
               value={formData.identificationNumber}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
               required
             />
           </div>
@@ -131,7 +131,7 @@ export default function RegisterForm({ role, onBack, onSuccess }: RegisterFormPr
             name="email"
             value={formData.email}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
             placeholder="your.name@school.edu"
             required
           />
@@ -146,7 +146,7 @@ export default function RegisterForm({ role, onBack, onSuccess }: RegisterFormPr
             name="phoneNumber"
             value={formData.phoneNumber}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
             required
           />
         </div>
@@ -161,7 +161,7 @@ export default function RegisterForm({ role, onBack, onSuccess }: RegisterFormPr
               name="department"
               value={formData.department}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
               placeholder="e.g., Mathematics, Science, English"
               required
             />
@@ -178,7 +178,7 @@ export default function RegisterForm({ role, onBack, onSuccess }: RegisterFormPr
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
               required
             />
           </div>
@@ -192,7 +192,7 @@ export default function RegisterForm({ role, onBack, onSuccess }: RegisterFormPr
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
               required
             />
           </div>

@@ -59,7 +59,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
@@ -76,7 +76,7 @@ export default function Home() {
 
         {pageState === "roleSelect" && (
           /* Role Selection */
-          <div className="bg-white rounded-lg shadow-lg p-8 space-y-4">
+          <div className="bg-white rounded-xl shadow-xl p-8 space-y-4 border border-gray-100">
             <h2 className="text-xl font-semibold text-center text-gray-800 mb-6">
               Access Your Intelligence Dashboard
             </h2>
@@ -105,7 +105,7 @@ export default function Home() {
 
         {pageState === "login" && selectedRole && (
           /* Login Form */
-          <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="bg-white rounded-xl shadow-xl p-8 border border-gray-100">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-800 capitalize">
                 {selectedRole === "teacher" ? "Teacher Analytics" : "Student Success"} Login
@@ -133,7 +133,7 @@ export default function Home() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
                   placeholder="Enter your institutional email"
                   required
                 />
@@ -147,7 +147,7 @@ export default function Home() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
                   placeholder="Enter your password"
                   required
                 />
