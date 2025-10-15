@@ -55,7 +55,6 @@ export default function AdminClassesPage() {
       setClasses(coursesData);
       setTeachers(teachersData);
     } catch (error) {
-      console.error("Error loading data:", error);
     }
   };
 
@@ -86,7 +85,6 @@ export default function AdminClassesPage() {
       await loadData();
       setShowModal(false);
     } catch (error) {
-      console.error("Error saving course:", error);
       throw new Error("Failed to save course");
     }
   };
@@ -102,7 +100,6 @@ export default function AdminClassesPage() {
       await loadData();
       alert("Class deleted successfully");
     } catch (error) {
-      console.error("Error deleting class:", error);
       alert("Failed to delete class");
     }
   };

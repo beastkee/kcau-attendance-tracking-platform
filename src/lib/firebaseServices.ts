@@ -1,7 +1,5 @@
-// Import database connection
+// TODO: Add request caching layer
 import { db } from './firebase';
-
-// Import User type
 import { User } from '../types/firebase';
 
 // Import Firestore functions
@@ -35,10 +33,8 @@ import { auth } from './firebase';
 export const loginUser = async (email: string, password: string) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log('User logged in:', userCredential.user.email);
     return userCredential.user;
   } catch (error) {
-    console.error('Error logging in:', error);
     throw new Error('Failed to login');
   }
 };
@@ -48,10 +44,8 @@ export const createUser = async (userData: User): Promise<string> => {
   try {
     // Add document to 'users' collection
     const docRef = await addDoc(collection(db, 'users'), userData);
-    console.log('User created with ID:', docRef.id);
     return docRef.id; // Return the auto-generated document ID
   } catch (error) {
-    console.error('Error creating user:', error);
     throw new Error('Failed to create user');
   }
 };
@@ -59,9 +53,7 @@ export const createUser = async (userData: User): Promise<string> => {
 export const logoutUser = async () => {
   try {
     await signOut(auth);
-    console.log('User logged out successfully');
   } catch (error) {
-    console.error('Error logging out:', error);
     throw new Error('Failed to logout');
   }
 };
@@ -93,7 +85,6 @@ export const registerUser = async (
     };
     await createUser(userDocData);
 
-    console.log('User registered successfully:', email);
     return firebaseUser.uid;
   } catch (error: any) {
     // If Firestore user creation fails after Auth user is created, delete the Auth user
@@ -102,10 +93,8 @@ export const registerUser = async (
         await deleteAuthUser(firebaseUser);
         console.warn('Auth user deleted due to Firestore registration failure');
       } catch (delErr) {
-        console.error('Failed to delete orphaned Auth user:', delErr);
       }
     }
-    console.error('Error registering user:', error);
     // Handle specific Firebase errors
     if (error.code === 'auth/email-already-in-use') {
       throw new Error('This email is already registered');
@@ -127,7 +116,6 @@ export const checkEmailVerification = async (): Promise<boolean> => {
     await user.reload(); // Refresh user data
     return user.emailVerified;
   } catch (error) {
-    console.error('Error checking email verification:', error);
     return false;
   }
 };
@@ -139,9 +127,7 @@ export const resendEmailVerification = async (): Promise<void> => {
     if (!user) throw new Error('No user logged in');
     
     await sendEmailVerification(user);
-    console.log('Verification email sent');
   } catch (error) {
-    console.error('Error resending verification email:', error);
     throw new Error('Failed to send verification email');
   }
 };
@@ -163,7 +149,6 @@ export const getUserById = async (userId: string): Promise<User | null> => {
       return null; // User not found
     }
   } catch (error) {
-    console.error('Error getting user:', error);
     throw new Error('Failed to get user');
   }
 };
@@ -173,9 +158,7 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
   try {
     const docRef = doc(db, 'users', userId);
     await updateDoc(docRef, userData);
-    console.log('User updated with ID:', userId);
   } catch (error) {
-    console.error('Error updating user:', error);
     throw new Error('Failed to update user');
   }
 };
@@ -187,9 +170,7 @@ export const deleteUser = async (userId: string): Promise<void> => {
   try {
     const docRef = doc(db, 'users', userId);
     await deleteDoc(docRef);
-    console.log('User deleted with ID:', userId);
   } catch (error) {
-    console.error('Error deleting user:', error);
     throw new Error('Failed to delete user');
   }
 };
@@ -215,7 +196,6 @@ export const getAllUsers = async (roleFilter?: string): Promise<User[]> => {
     
     return users;
   } catch (error) {
-    console.error('Error getting users:', error);
     throw new Error('Failed to get users');
   }
 };
@@ -233,10 +213,8 @@ export const getUsersByRole = async (role: 'student' | 'teacher' | 'admin'): Pro
       users.push({ id: doc.id, ...doc.data() } as User);
     });
     
-    console.log(`Found ${users.length} ${role}s`);
     return users;
   } catch (error) {
-    console.error(`Error getting ${role}s:`, error);
     throw new Error(`Failed to get ${role}s`);
   }
 };
@@ -247,7 +225,6 @@ export const getStudentsCount = async (): Promise<number> => {
     const students = await getUsersByRole('student');
     return students.length;
   } catch (error) {
-    console.error('Error getting students count:', error);
     return 0;
   }
 };
@@ -258,7 +235,6 @@ export const getTeachersCount = async (): Promise<number> => {
     const teachers = await getUsersByRole('teacher');
     return teachers.length;
   } catch (error) {
-    console.error('Error getting teachers count:', error);
     return 0;
   }
 };
@@ -278,7 +254,6 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
     const doc = querySnapshot.docs[0];
     return { id: doc.id, ...doc.data() } as User;
   } catch (error) {
-    console.error('Error getting user by email:', error);
     throw new Error('Failed to get user by email');
   }
 };
@@ -287,9 +262,7 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 export const updateUserStatus = async (userId: string, status: 'active' | 'inactive' | 'suspended'): Promise<void> => {
   try {
     await updateUser(userId, { accountStatus: status });
-    console.log(`User ${userId} status updated to ${status}`);
   } catch (error) {
-    console.error('Error updating user status:', error);
     throw new Error('Failed to update user status');
   }
 };
@@ -308,10 +281,8 @@ export const createCourse = async (courseData: Omit<Course, 'id'>): Promise<stri
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
-    console.log('Course created with ID:', docRef.id);
     return docRef.id;
   } catch (error) {
-    console.error('Error creating course:', error);
     throw new Error('Failed to create course');
   }
 };
@@ -328,7 +299,6 @@ export const getCourseById = async (courseId: string): Promise<Course | null> =>
       return null;
     }
   } catch (error) {
-    console.error('Error getting course:', error);
     throw new Error('Failed to get course');
   }
 };
@@ -344,10 +314,8 @@ export const getAllCourses = async (): Promise<Course[]> => {
       courses.push({ id: doc.id, ...doc.data() } as Course);
     });
     
-    console.log(`Found ${courses.length} courses`);
     return courses;
   } catch (error) {
-    console.error('Error getting courses:', error);
     throw new Error('Failed to get courses');
   }
 };
@@ -365,10 +333,8 @@ export const getCoursesByTeacher = async (teacherId: string): Promise<Course[]> 
       courses.push({ id: doc.id, ...doc.data() } as Course);
     });
     
-    console.log(`Found ${courses.length} courses for teacher ${teacherId}`);
     return courses;
   } catch (error) {
-    console.error('Error getting courses by teacher:', error);
     throw new Error('Failed to get courses by teacher');
   }
 };
@@ -381,9 +347,7 @@ export const updateCourse = async (courseId: string, courseData: Partial<Course>
       ...courseData,
       updatedAt: new Date().toISOString(),
     });
-    console.log('Course updated with ID:', courseId);
   } catch (error) {
-    console.error('Error updating course:', error);
     throw new Error('Failed to update course');
   }
 };
@@ -393,9 +357,7 @@ export const deleteCourse = async (courseId: string): Promise<void> => {
   try {
     const docRef = doc(db, 'courses', courseId);
     await deleteDoc(docRef);
-    console.log('Course deleted with ID:', courseId);
   } catch (error) {
-    console.error('Error deleting course:', error);
     throw new Error('Failed to delete course');
   }
 };
@@ -413,11 +375,9 @@ export const enrollStudent = async (courseId: string, studentId: string): Promis
       if (!studentIds.includes(studentId)) {
         studentIds.push(studentId);
         await updateDoc(courseRef, { studentIds, updatedAt: new Date().toISOString() });
-        console.log(`Student ${studentId} enrolled in course ${courseId}`);
       }
     }
   } catch (error) {
-    console.error('Error enrolling student:', error);
     throw new Error('Failed to enroll student');
   }
 };
@@ -433,10 +393,8 @@ export const unenrollStudent = async (courseId: string, studentId: string): Prom
       const studentIds = (course.studentIds || []).filter(id => id !== studentId);
       
       await updateDoc(courseRef, { studentIds, updatedAt: new Date().toISOString() });
-      console.log(`Student ${studentId} unenrolled from course ${courseId}`);
     }
   } catch (error) {
-    console.error('Error unenrolling student:', error);
     throw new Error('Failed to unenroll student');
   }
 };
@@ -461,10 +419,8 @@ export const createAttendanceRecords = async (records: Omit<AttendanceRecord, 'i
       ids.push(docRef.id);
     }
     
-    console.log(`Created ${ids.length} attendance record(s)`);
     return ids;
   } catch (error) {
-    console.error('Error creating attendance records:', error);
     throw new Error('Failed to create attendance records');
   }
 };
@@ -482,10 +438,8 @@ export const getAttendanceByStudent = async (studentId: string): Promise<Attenda
       records.push({ id: doc.id, ...doc.data() } as AttendanceRecord);
     });
     
-    console.log(`Found ${records.length} attendance records for student ${studentId}`);
     return records;
   } catch (error) {
-    console.error('Error getting attendance by student:', error);
     throw new Error('Failed to get attendance records');
   }
 };
@@ -503,10 +457,8 @@ export const getAttendanceByCourse = async (courseId: string): Promise<Attendanc
       records.push({ id: doc.id, ...doc.data() } as AttendanceRecord);
     });
     
-    console.log(`Found ${records.length} attendance records for course ${courseId}`);
     return records;
   } catch (error) {
-    console.error('Error getting attendance by course:', error);
     throw new Error('Failed to get attendance records');
   }
 };
@@ -530,7 +482,6 @@ export const getAttendanceByDate = async (courseId: string, date: string): Promi
     
     return records;
   } catch (error) {
-    console.error('Error getting attendance by date:', error);
     throw new Error('Failed to get attendance records');
   }
 };
@@ -540,9 +491,7 @@ export const updateAttendanceRecord = async (recordId: string, data: Partial<Att
   try {
     const docRef = doc(db, 'attendance', recordId);
     await updateDoc(docRef, data);
-    console.log('Attendance record updated:', recordId);
   } catch (error) {
-    console.error('Error updating attendance record:', error);
     throw new Error('Failed to update attendance record');
   }
 };
@@ -552,9 +501,7 @@ export const deleteAttendanceRecord = async (recordId: string): Promise<void> =>
   try {
     const docRef = doc(db, 'attendance', recordId);
     await deleteDoc(docRef);
-    console.log('Attendance record deleted:', recordId);
   } catch (error) {
-    console.error('Error deleting attendance record:', error);
     throw new Error('Failed to delete attendance record');
   }
 };

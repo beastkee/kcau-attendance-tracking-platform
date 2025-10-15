@@ -45,7 +45,6 @@ export default function EmailVerification({ userRole }: EmailVerificationProps) 
       await logoutUser();
       router.push("/");
     } catch (error) {
-      console.error("Error logging out:", error);
     }
   };
 

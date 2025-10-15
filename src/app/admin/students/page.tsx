@@ -53,13 +53,12 @@ export default function AdminStudentsPage() {
       setStudents(studentsData);
       
       // Calculate risk scores for all students
-      await loadRiskAssessments(studentsData);
+      await loadRisks(studentsData);
     } catch (error) {
-      console.error("Error loading students:", error);
     }
   };
 
-  const loadRiskAssessments = async (studentsData: User[]) => {
+  const loadRisks = async (studentsData: User[]) => {
     try {
       const riskMap: Record<string, RiskAssessment> = {};
       
@@ -76,7 +75,6 @@ export default function AdminStudentsPage() {
       
       setStudentRisks(riskMap);
     } catch (error) {
-      console.error("Error loading risk assessments:", error);
     }
   };
 
@@ -93,7 +91,6 @@ export default function AdminStudentsPage() {
       await loadStudents();
       alert("Student deleted successfully");
     } catch (error) {
-      console.error("Error deleting student:", error);
       alert("Failed to delete student");
     }
   };
@@ -125,7 +122,6 @@ export default function AdminStudentsPage() {
       await loadStudents();
       setShowModal(false);
     } catch (error) {
-      console.error("Error saving student:", error);
       throw new Error("Failed to save student");
     }
   };

@@ -12,11 +12,9 @@ import { useRouter } from "next/navigation";
 import { User } from "@/types/firebase";
 import { Course } from "@/types";
 import { analyzeStudentAttendance, RiskAssessment } from "@/lib/analytics";
-import DashboardLayout from "../../../components/ui/DashboardLayout";
-import { Card, StatCard } from "../../../components/ui/Card";
-import dynamic from "next/dynamic";
-
-const RiskBadge = dynamic(() => import("@/components/intelligence/RiskBadge"), { ssr: false });
+import DashboardLayout from "@/components/ui/DashboardLayout";
+import { Card, StatCard } from "@/components/ui/Card";
+import RiskBadge from "@/components/intelligence/RiskBadge";
 
 const teacherSidebarItems = [
   { name: "Dashboard", href: "/teacher", icon: "📊" },
@@ -53,7 +51,7 @@ export default function TeacherDashboard() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setIsAuthenticated(true);
-        await loadTeacherData(user.uid);
+        await loadData(user.uid);
       } else {
         setIsAuthenticated(false);
         router.push("/");
@@ -64,9 +62,9 @@ export default function TeacherDashboard() {
     return () => unsubscribe();
   }, [router]);
 
-  const loadTeacherData = async (teacherId: string) => {
+  const loadData = async (teacherId: string) => {
     try {
-      // Load teacher's courses and all students
+      // TODO: Add caching for course data
       const [coursesData, studentsData] = await Promise.all([
         getCoursesByTeacher(teacherId),
         getUsersByRole("student"),
@@ -113,7 +111,7 @@ export default function TeacherDashboard() {
 
       setClassRiskSummaries(summaries);
 
-      // Collect all high-risk students across all classes
+      // HACK: Should filter by date range, but using all records for now
       const allHighRisk: Array<{ student: User; risk: RiskAssessment; course: Course }> = [];
       
       for (const course of coursesData) {
@@ -134,7 +132,6 @@ export default function TeacherDashboard() {
 
       setHighRiskStudents(allHighRisk);
     } catch (error) {
-      console.error("Error loading teacher data:", error);
     }
   };
 
@@ -330,7 +327,7 @@ export default function TeacherDashboard() {
                       </div>
                     </div>
                     <button
-                      onClick={() => alert(`Contact student: ${student.email}`)}
+                      onClick={() => window.location.href = `mailto:${student.email}?subject=Attendance Concern`}
                       className="ml-4 text-sm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
                     >
                       Contact

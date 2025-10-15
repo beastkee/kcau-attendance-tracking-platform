@@ -50,7 +50,6 @@ export default function AdminTeachersPage() {
       const teachersData = await getUsersByRole("teacher");
       setTeachers(teachersData);
     } catch (error) {
-      console.error("Error loading teachers:", error);
     }
   };
 
@@ -67,7 +66,6 @@ export default function AdminTeachersPage() {
       await loadTeachers();
       alert("Teacher deleted successfully");
     } catch (error) {
-      console.error("Error deleting teacher:", error);
       alert("Failed to delete teacher");
     }
   };
@@ -99,7 +97,6 @@ export default function AdminTeachersPage() {
       await loadTeachers();
       setShowModal(false);
     } catch (error) {
-      console.error("Error saving teacher:", error);
       throw new Error("Failed to save teacher");
     }
   };

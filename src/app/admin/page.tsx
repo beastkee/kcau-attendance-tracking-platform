@@ -18,9 +18,7 @@ import { analyzeStudentAttendance, RiskAssessment } from "@/lib/analytics";
 import AdminLogin from "@/components/auth/AdminLogin";
 import DashboardLayout from "@/components/ui/DashboardLayout";
 import { Card, StatCard } from "@/components/ui/Card";
-import dynamic from "next/dynamic";
-
-const RiskBadge = dynamic(() => import("@/components/intelligence/RiskBadge"), { ssr: false });
+import RiskBadge from "@/components/intelligence/RiskBadge";
 
 const adminSidebarItems = [
   { name: "Intelligence Hub", href: "/admin", icon: "📊" },
@@ -53,16 +51,16 @@ export default function AdminPage() {
       setLoading(false);
       
       if (user) {
-        loadDashboardData();
+        loadData();
       }
     });
 
     return () => unsubscribe();
   }, []);
 
-  const loadDashboardData = async () => {
+  const loadData = async () => {
     try {
-      // Pull all users from Firestore and auto-categorize
+      // BUG: This loads all data on mount - should paginate for scale
       const [studentsData, teachersData, coursesData] = await Promise.all([
         getUsersByRole("student"),
         getUsersByRole("teacher"),
@@ -74,13 +72,12 @@ export default function AdminPage() {
       setCourses(coursesData);
       
       // Calculate risk for all students
-      await loadRiskAssessments(studentsData);
+      await loadRisks(studentsData);
     } catch (error) {
-      console.error("Error loading dashboard data:", error);
     }
   };
 
-  const loadRiskAssessments = async (studentsData: User[]) => {
+  const loadRisks = async (studentsData: User[]) => {
     try {
       const riskMap: Record<string, RiskAssessment> = {};
       
@@ -96,17 +93,17 @@ export default function AdminPage() {
       
       setStudentRisks(riskMap);
     } catch (error) {
-      console.error("Error loading risk assessments:", error);
     }
   };
 
-  const handleQuickEdit = (user: User) => {
+  const editUser = (user: User) => {
     setSelectedUser(user);
     setEditRole(user.role);
     setEditStatus(user.accountStatus);
     setShowEditModal(true);
   };
 
+  // TODO: Add optimistic updates for better UX
   const handleSaveEdit = async () => {
     if (!selectedUser || !selectedUser.id) return;
 
@@ -118,9 +115,8 @@ export default function AdminPage() {
       
       alert("User updated successfully!");
       setShowEditModal(false);
-      loadDashboardData(); // Reload to reflect changes
+      loadData(); // Reload to reflect changes
     } catch (error) {
-      console.error("Error updating user:", error);
       alert("Failed to update user");
     }
   };
@@ -153,9 +149,8 @@ export default function AdminPage() {
       
       alert("Course enrollment updated!");
       setShowEnrollModal(false);
-      loadDashboardData();
+      loadData();
     } catch (error) {
-      console.error("Error updating enrollment:", error);
       alert("Failed to update enrollment");
     }
   };
@@ -168,9 +163,8 @@ export default function AdminPage() {
     try {
       await deleteUser(userId);
       alert("User deleted successfully");
-      loadDashboardData();
+      loadData();
     } catch (error) {
-      console.error("Error deleting user:", error);
       alert("Failed to delete user");
     }
   };
@@ -270,7 +264,7 @@ export default function AdminPage() {
                         </div>
                         <div className="flex flex-col gap-1 ml-2">
                           <button
-                            onClick={() => handleQuickEdit(student)}
+                            onClick={() => editUser(student)}
                             className="text-xs text-blue-600 hover:text-blue-800"
                             title="Quick Edit"
                           >
@@ -345,7 +339,7 @@ export default function AdminPage() {
                         </div>
                         <div className="flex flex-col gap-1 ml-2">
                           <button
-                            onClick={() => handleQuickEdit(teacher)}
+                            onClick={() => editUser(teacher)}
                             className="text-xs text-blue-600 hover:text-blue-800"
                             title="Quick Edit"
                           >

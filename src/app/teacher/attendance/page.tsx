@@ -56,7 +56,6 @@ export default function TeacherAttendancePage() {
       const coursesData = await getCoursesByTeacher(teacherId);
       setCourses(coursesData);
     } catch (error) {
-      console.error("Error loading courses:", error);
     }
   };
 
@@ -80,7 +79,6 @@ export default function TeacherAttendancePage() {
       });
       setAttendanceData(existingData);
     } catch (error) {
-      console.error("Error loading students:", error);
     }
   };
 
@@ -101,7 +99,7 @@ export default function TeacherAttendancePage() {
     setAttendanceData(newData);
   };
 
-  const handleSaveAttendance = async () => {
+  const saveAttendance = async () => {
     if (!selectedCourse?.id) return;
     
     setSaving(true);
@@ -127,7 +125,6 @@ export default function TeacherAttendancePage() {
         alert("Please mark attendance for at least one student");
       }
     } catch (error) {
-      console.error("Error saving attendance:", error);
       alert("Failed to save attendance. Please try again.");
     } finally {
       setSaving(false);
@@ -267,7 +264,7 @@ export default function TeacherAttendancePage() {
 
             <div className="mt-6 flex justify-end">
               <button
-                onClick={handleSaveAttendance}
+                onClick={saveAttendance}
                 disabled={saving || Object.keys(attendanceData).length === 0}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
