@@ -49,17 +49,18 @@ export default function RegisterForm({ role, onBack, onSuccess }: RegisterFormPr
     setError("");
 
     try {
+
       const userData: Omit<User, 'isEmailVerified'> = {
         name: formData.name,
         email: formData.email,
         role: role,
-        identificationNumber: parseInt(formData.identificationNumber),
+        identificationNumber: String(formData.identificationNumber),
         phoneNumber: formData.phoneNumber,
         accountStatus: "active",
-        dateJoined: new Date(),
+        dateJoined: new Date().toISOString(),
         department: role === "teacher" ? formData.department : undefined,
         courses: role === "student" ? formData.courses.filter(c => c) : undefined,
-        courseCode: role === "student" ? parseInt(formData.identificationNumber) : 0
+        courseCode: role === "student" ? String(formData.identificationNumber) : undefined
       };
 
       await registerUser(formData.email, formData.password, userData);

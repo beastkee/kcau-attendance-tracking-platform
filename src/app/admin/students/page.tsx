@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { getUsersByRole, deleteUser } from "@/lib/firebaseServices";
+import { getUsersByRole, deleteUser, createUser, updateUser, getAttendanceByStudent } from "@/lib/firebaseServices";
 import { User } from "@/types/firebase";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/ui/DashboardLayout";
 import UserTable from "@/components/ui/UserTable";
+import UserModal from "@/components/ui/UserModal";
+import { analyzeStudentAttendance, RiskAssessment } from "@/lib/analytics";
 
 const adminSidebarItems = [
   { name: "Intelligence Hub", href: "/admin", icon: "📊" },
@@ -23,8 +25,11 @@ export default function AdminStudentsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<User[]>([]);
+  const [studentRisks, setStudentRisks] = useState<Record<string, RiskAssessment>>({});
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const router = useRouter();
 
   useEffect(() => {
@@ -46,15 +51,39 @@ export default function AdminStudentsPage() {
     try {
       const studentsData = await getUsersByRole("student");
       setStudents(studentsData);
+      
+      // Calculate risk scores for all students
+      await loadRiskAssessments(studentsData);
     } catch (error) {
       console.error("Error loading students:", error);
     }
   };
 
+  const loadRiskAssessments = async (studentsData: User[]) => {
+    try {
+      const riskMap: Record<string, RiskAssessment> = {};
+      
+      // Fetch attendance and calculate risk for each student
+      await Promise.all(
+        studentsData.map(async (student) => {
+          if (student.id) {
+            const attendanceRecords = await getAttendanceByStudent(student.id);
+            const riskAssessment = analyzeStudentAttendance(attendanceRecords);
+            riskMap[student.id] = riskAssessment;
+          }
+        })
+      );
+      
+      setStudentRisks(riskMap);
+    } catch (error) {
+      console.error("Error loading risk assessments:", error);
+    }
+  };
+
   const handleEdit = (student: User) => {
     setSelectedStudent(student);
-    // TODO: Open edit modal
-    alert(`Edit functionality for ${student.name} will be implemented next`);
+    setModalMode("edit");
+    setShowModal(true);
   };
 
   const handleDelete = async (userId: string) => {
@@ -75,8 +104,30 @@ export default function AdminStudentsPage() {
   };
 
   const handleAddStudent = () => {
-    // TODO: Open add student modal
-    alert("Add student functionality will be implemented next");
+    setSelectedStudent(null);
+    setModalMode("add");
+    setShowModal(true);
+  };
+
+  const handleSaveUser = async (userData: Partial<User>) => {
+    try {
+      if (modalMode === "add") {
+        const newUser: User = {
+          ...userData,
+          role: "student",
+          dateJoined: new Date().toISOString(),
+          isEmailVerified: false,
+        } as User;
+        await createUser(newUser);
+      } else if (selectedStudent?.id) {
+        await updateUser(selectedStudent.id, userData);
+      }
+      await loadStudents();
+      setShowModal(false);
+    } catch (error) {
+      console.error("Error saving student:", error);
+      throw new Error("Failed to save student");
+    }
   };
 
   if (loading) {
@@ -128,34 +179,34 @@ export default function AdminStudentsPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Active</p>
+                <p className="text-sm text-gray-600">High Risk</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {Object.values(studentRisks).filter((r) => r.level === "high").length}
+                </p>
+              </div>
+              <div className="text-3xl">🚨</div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Medium Risk</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {Object.values(studentRisks).filter((r) => r.level === "medium").length}
+                </p>
+              </div>
+              <div className="text-3xl">⚠️</div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Low Risk</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {students.filter((s) => s.accountStatus === "active").length}
+                  {Object.values(studentRisks).filter((r) => r.level === "low").length}
                 </p>
               </div>
               <div className="text-3xl">✅</div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Inactive</p>
-                <p className="text-2xl font-bold text-gray-600">
-                  {students.filter((s) => s.accountStatus === "inactive").length}
-                </p>
-              </div>
-              <div className="text-3xl">⏸️</div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Email Verified</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {students.filter((s) => s.isEmailVerified).length}
-                </p>
-              </div>
-              <div className="text-3xl">📧</div>
             </div>
           </div>
         </div>
@@ -166,12 +217,13 @@ export default function AdminStudentsPage() {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onViewDetails={handleViewDetails}
+          riskData={studentRisks}
         />
 
         {/* Student Details Modal */}
         {showDetails && selectedStudent && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4">
+            <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-start mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Student Details</h2>
                 <button
@@ -192,6 +244,68 @@ export default function AdminStudentsPage() {
                     <p className="text-gray-600">{selectedStudent.email}</p>
                   </div>
                 </div>
+
+                {/* Risk Assessment Card */}
+                {selectedStudent.id && studentRisks[selectedStudent.id] && (
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <h4 className="font-semibold text-gray-900 mb-3">Risk Assessment</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Risk Level:</span>
+                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                          studentRisks[selectedStudent.id].level === "high"
+                            ? "bg-red-100 text-red-700"
+                            : studentRisks[selectedStudent.id].level === "medium"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-green-100 text-green-700"
+                        }`}>
+                          {studentRisks[selectedStudent.id].level.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Risk Score:</span>
+                        <span className="font-semibold">{studentRisks[selectedStudent.id].score.toFixed(1)}%</span>
+                      </div>
+                      <div className="pt-2 border-t border-gray-200">
+                        <p className="text-xs text-gray-500 mb-2">Breakdown:</p>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Attendance Rate:</span>
+                            <span className="font-medium">{studentRisks[selectedStudent.id].breakdown.attendancePercentage.toFixed(1)}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Total Absences:</span>
+                            <span className="font-medium">{studentRisks[selectedStudent.id].breakdown.absences}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Times Late:</span>
+                            <span className="font-medium">{studentRisks[selectedStudent.id].breakdown.lates}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Total Sessions:</span>
+                            <span className="font-medium">{studentRisks[selectedStudent.id].breakdown.totalSessions}</span>
+                          </div>
+                          {studentRisks[selectedStudent.id].breakdown.recentTrendSlope !== undefined && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Recent Trend:</span>
+                              <span className={`font-medium ${
+                                studentRisks[selectedStudent.id].breakdown.recentTrendSlope! > 0 
+                                  ? "text-green-600" 
+                                  : studentRisks[selectedStudent.id].breakdown.recentTrendSlope! < 0 
+                                  ? "text-red-600" 
+                                  : "text-gray-600"
+                              }`}>
+                                {studentRisks[selectedStudent.id].breakdown.recentTrendSlope! > 0 ? "↗ Improving" : 
+                                 studentRisks[selectedStudent.id].breakdown.recentTrendSlope! < 0 ? "↘ Declining" : 
+                                 "→ Stable"}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -259,6 +373,16 @@ export default function AdminStudentsPage() {
             </div>
           </div>
         )}
+
+        {/* Add/Edit Student Modal */}
+        <UserModal
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          onSave={handleSaveUser}
+          initialData={selectedStudent || undefined}
+          mode={modalMode}
+          role="student"
+        />
       </div>
     </DashboardLayout>
   );

@@ -24,7 +24,8 @@ import {
   signOut,
   onAuthStateChanged,
   sendEmailVerification,
-  updateProfile
+  updateProfile,
+  deleteUser as deleteAuthUser
 } from 'firebase/auth';
 
 // Import auth from firebase config
@@ -71,10 +72,11 @@ export const registerUser = async (
   password: string, 
   userData: Omit<User, 'isEmailVerified'>
 ): Promise<string> => {
+  let firebaseUser: import('firebase/auth').User | null = null;
   try {
     // Create Firebase Auth user
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const firebaseUser = userCredential.user;
+    firebaseUser = userCredential.user;
 
     // Update display name
     await updateProfile(firebaseUser, {
@@ -89,14 +91,21 @@ export const registerUser = async (
       ...userData,
       isEmailVerified: false
     };
-    
     await createUser(userDocData);
 
     console.log('User registered successfully:', email);
     return firebaseUser.uid;
   } catch (error: any) {
+    // If Firestore user creation fails after Auth user is created, delete the Auth user
+    if (firebaseUser && !firebaseUser.emailVerified) {
+      try {
+        await deleteAuthUser(firebaseUser);
+        console.warn('Auth user deleted due to Firestore registration failure');
+      } catch (delErr) {
+        console.error('Failed to delete orphaned Auth user:', delErr);
+      }
+    }
     console.error('Error registering user:', error);
-    
     // Handle specific Firebase errors
     if (error.code === 'auth/email-already-in-use') {
       throw new Error('This email is already registered');
@@ -105,7 +114,6 @@ export const registerUser = async (
     } else if (error.code === 'auth/invalid-email') {
       throw new Error('Invalid email address');
     }
-    
     throw new Error('Failed to register user');
   }
 };
@@ -283,5 +291,270 @@ export const updateUserStatus = async (userId: string, status: 'active' | 'inact
   } catch (error) {
     console.error('Error updating user status:', error);
     throw new Error('Failed to update user status');
+  }
+};
+
+// ============================================
+// CLASS/COURSE MANAGEMENT FUNCTIONS
+// ============================================
+
+import { Course } from '../types';
+
+// Create a new class/course
+export const createCourse = async (courseData: Omit<Course, 'id'>): Promise<string> => {
+  try {
+    const docRef = await addDoc(collection(db, 'courses'), {
+      ...courseData,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    console.log('Course created with ID:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error creating course:', error);
+    throw new Error('Failed to create course');
+  }
+};
+
+// Get a course by ID
+export const getCourseById = async (courseId: string): Promise<Course | null> => {
+  try {
+    const docRef = doc(db, 'courses', courseId);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as Course;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error('Error getting course:', error);
+    throw new Error('Failed to get course');
+  }
+};
+
+// Get all courses
+export const getAllCourses = async (): Promise<Course[]> => {
+  try {
+    const coursesRef = collection(db, 'courses');
+    const querySnapshot = await getDocs(coursesRef);
+    const courses: Course[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      courses.push({ id: doc.id, ...doc.data() } as Course);
+    });
+    
+    console.log(`Found ${courses.length} courses`);
+    return courses;
+  } catch (error) {
+    console.error('Error getting courses:', error);
+    throw new Error('Failed to get courses');
+  }
+};
+
+// Get courses by teacher ID
+export const getCoursesByTeacher = async (teacherId: string): Promise<Course[]> => {
+  try {
+    const coursesRef = collection(db, 'courses');
+    const q = query(coursesRef, where('teacherId', '==', teacherId));
+    
+    const querySnapshot = await getDocs(q);
+    const courses: Course[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      courses.push({ id: doc.id, ...doc.data() } as Course);
+    });
+    
+    console.log(`Found ${courses.length} courses for teacher ${teacherId}`);
+    return courses;
+  } catch (error) {
+    console.error('Error getting courses by teacher:', error);
+    throw new Error('Failed to get courses by teacher');
+  }
+};
+
+// Update a course
+export const updateCourse = async (courseId: string, courseData: Partial<Course>): Promise<void> => {
+  try {
+    const docRef = doc(db, 'courses', courseId);
+    await updateDoc(docRef, {
+      ...courseData,
+      updatedAt: new Date().toISOString(),
+    });
+    console.log('Course updated with ID:', courseId);
+  } catch (error) {
+    console.error('Error updating course:', error);
+    throw new Error('Failed to update course');
+  }
+};
+
+// Delete a course
+export const deleteCourse = async (courseId: string): Promise<void> => {
+  try {
+    const docRef = doc(db, 'courses', courseId);
+    await deleteDoc(docRef);
+    console.log('Course deleted with ID:', courseId);
+  } catch (error) {
+    console.error('Error deleting course:', error);
+    throw new Error('Failed to delete course');
+  }
+};
+
+// Enroll a student in a course
+export const enrollStudent = async (courseId: string, studentId: string): Promise<void> => {
+  try {
+    const courseRef = doc(db, 'courses', courseId);
+    const courseSnap = await getDoc(courseRef);
+    
+    if (courseSnap.exists()) {
+      const course = courseSnap.data() as Course;
+      const studentIds = course.studentIds || [];
+      
+      if (!studentIds.includes(studentId)) {
+        studentIds.push(studentId);
+        await updateDoc(courseRef, { studentIds, updatedAt: new Date().toISOString() });
+        console.log(`Student ${studentId} enrolled in course ${courseId}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error enrolling student:', error);
+    throw new Error('Failed to enroll student');
+  }
+};
+
+// Unenroll a student from a course
+export const unenrollStudent = async (courseId: string, studentId: string): Promise<void> => {
+  try {
+    const courseRef = doc(db, 'courses', courseId);
+    const courseSnap = await getDoc(courseRef);
+    
+    if (courseSnap.exists()) {
+      const course = courseSnap.data() as Course;
+      const studentIds = (course.studentIds || []).filter(id => id !== studentId);
+      
+      await updateDoc(courseRef, { studentIds, updatedAt: new Date().toISOString() });
+      console.log(`Student ${studentId} unenrolled from course ${courseId}`);
+    }
+  } catch (error) {
+    console.error('Error unenrolling student:', error);
+    throw new Error('Failed to unenroll student');
+  }
+};
+
+// ============================================
+// ATTENDANCE MANAGEMENT FUNCTIONS
+// ============================================
+
+import { AttendanceRecord } from '../types';
+
+// Create attendance record(s) - can be single or batch
+export const createAttendanceRecords = async (records: Omit<AttendanceRecord, 'id'>[]): Promise<string[]> => {
+  try {
+    const ids: string[] = [];
+    const attendanceRef = collection(db, 'attendance');
+    
+    for (const record of records) {
+      const docRef = await addDoc(attendanceRef, {
+        ...record,
+        createdAt: new Date().toISOString(),
+      });
+      ids.push(docRef.id);
+    }
+    
+    console.log(`Created ${ids.length} attendance record(s)`);
+    return ids;
+  } catch (error) {
+    console.error('Error creating attendance records:', error);
+    throw new Error('Failed to create attendance records');
+  }
+};
+
+// Get attendance records for a student
+export const getAttendanceByStudent = async (studentId: string): Promise<AttendanceRecord[]> => {
+  try {
+    const attendanceRef = collection(db, 'attendance');
+    const q = query(attendanceRef, where('studentId', '==', studentId));
+    
+    const querySnapshot = await getDocs(q);
+    const records: AttendanceRecord[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      records.push({ id: doc.id, ...doc.data() } as AttendanceRecord);
+    });
+    
+    console.log(`Found ${records.length} attendance records for student ${studentId}`);
+    return records;
+  } catch (error) {
+    console.error('Error getting attendance by student:', error);
+    throw new Error('Failed to get attendance records');
+  }
+};
+
+// Get attendance records for a course
+export const getAttendanceByCourse = async (courseId: string): Promise<AttendanceRecord[]> => {
+  try {
+    const attendanceRef = collection(db, 'attendance');
+    const q = query(attendanceRef, where('courseId', '==', courseId));
+    
+    const querySnapshot = await getDocs(q);
+    const records: AttendanceRecord[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      records.push({ id: doc.id, ...doc.data() } as AttendanceRecord);
+    });
+    
+    console.log(`Found ${records.length} attendance records for course ${courseId}`);
+    return records;
+  } catch (error) {
+    console.error('Error getting attendance by course:', error);
+    throw new Error('Failed to get attendance records');
+  }
+};
+
+// Get attendance for a specific course and date
+export const getAttendanceByDate = async (courseId: string, date: string): Promise<AttendanceRecord[]> => {
+  try {
+    const attendanceRef = collection(db, 'attendance');
+    const q = query(
+      attendanceRef, 
+      where('courseId', '==', courseId),
+      where('date', '==', date)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const records: AttendanceRecord[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      records.push({ id: doc.id, ...doc.data() } as AttendanceRecord);
+    });
+    
+    return records;
+  } catch (error) {
+    console.error('Error getting attendance by date:', error);
+    throw new Error('Failed to get attendance records');
+  }
+};
+
+// Update attendance record
+export const updateAttendanceRecord = async (recordId: string, data: Partial<AttendanceRecord>): Promise<void> => {
+  try {
+    const docRef = doc(db, 'attendance', recordId);
+    await updateDoc(docRef, data);
+    console.log('Attendance record updated:', recordId);
+  } catch (error) {
+    console.error('Error updating attendance record:', error);
+    throw new Error('Failed to update attendance record');
+  }
+};
+
+// Delete attendance record
+export const deleteAttendanceRecord = async (recordId: string): Promise<void> => {
+  try {
+    const docRef = doc(db, 'attendance', recordId);
+    await deleteDoc(docRef);
+    console.log('Attendance record deleted:', recordId);
+  } catch (error) {
+    console.error('Error deleting attendance record:', error);
+    throw new Error('Failed to delete attendance record');
   }
 };
