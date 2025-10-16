@@ -7,7 +7,8 @@ import {
   collection, 
   addDoc, 
   doc, 
-  getDoc, 
+  getDoc,
+  setDoc, 
   updateDoc, 
   deleteDoc,
   getDocs,
@@ -43,12 +44,16 @@ export const loginUser = async (email: string, password: string) => {
 // Create a new user in Firestore
 export const createUser = async (userData: User): Promise<string> => {
   try {
+    console.log('Creating Firestore user document with data:', userData);
     // Add document to 'users' collection
     const docRef = await addDoc(collection(db, 'users'), userData);
+    console.log('Firestore document created with ID:', docRef.id);
     return docRef.id; // Return the auto-generated document ID
-  } catch (error) {
-      // Error handled
-    throw new Error('Failed to create user');
+  } catch (error: any) {
+    console.error('Firestore createUser error:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    throw new Error(`Failed to create user: ${error.message}`);
   }
 };
 
@@ -69,33 +74,57 @@ export const registerUser = async (
 ): Promise<string> => {
   let firebaseUser: import('firebase/auth').User | null = null;
   try {
+    console.log('Step 1: Creating Firebase Auth user...');
     // Create Firebase Auth user
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     firebaseUser = userCredential.user;
+    console.log('Step 1 complete: Firebase Auth user created', firebaseUser.uid);
 
     // Update display name
+    console.log('Step 2: Updating display name...');
     await updateProfile(firebaseUser, {
       displayName: userData.name
     });
+    console.log('Step 2 complete: Display name updated');
 
     // Send email verification
+    console.log('Step 3: Sending verification email...');
     await sendEmailVerification(firebaseUser);
+    console.log('Step 3 complete: Verification email sent');
 
     // Create user document in Firestore with the Firebase UID
+    console.log('Step 4: Creating Firestore user document...');
+    
+    // Remove undefined fields (Firestore doesn't support undefined)
+    const cleanUserData: any = {};
+    Object.keys(userData).forEach(key => {
+      const value = (userData as any)[key];
+      if (value !== undefined) {
+        cleanUserData[key] = value;
+      }
+    });
+    
     const userDocData = {
-      ...userData,
+      ...cleanUserData,
+      id: firebaseUser.uid, // Add the UID to the user data
       isEmailVerified: false
     };
-    await createUser(userDocData);
+    
+    // Use setDoc with the Firebase UID as the document ID
+    const userDocRef = doc(db, 'users', firebaseUser.uid);
+    await setDoc(userDocRef, userDocData);
+    console.log('Step 4 complete: Firestore user document created with UID:', firebaseUser.uid);
 
     return firebaseUser.uid;
   } catch (error: any) {
+    console.error('Registration failed at some step:', error);
     // If Firestore user creation fails after Auth user is created, delete the Auth user
     if (firebaseUser && !firebaseUser.emailVerified) {
       try {
         await deleteAuthUser(firebaseUser);
         console.warn('Auth user deleted due to Firestore registration failure');
       } catch (delErr) {
+        console.error('Failed to delete auth user:', delErr);
       }
     }
     // Handle specific Firebase errors
@@ -106,7 +135,7 @@ export const registerUser = async (
     } else if (error.code === 'auth/invalid-email') {
       throw new Error('Invalid email address');
     }
-    throw new Error('Failed to register user');
+    throw new Error(error.message || 'Failed to register user');
   }
 };
 
@@ -346,13 +375,21 @@ export const getCoursesByTeacher = async (teacherId: string): Promise<Course[]> 
     const querySnapshot = await getDocs(q);
     const courses: Course[] = [];
     
+    // Get teacher name
+    const teacherDoc = await getDoc(doc(db, 'users', teacherId));
+    const teacherName = teacherDoc.exists() ? teacherDoc.data().name : 'Unknown Teacher';
+    
     querySnapshot.forEach((doc) => {
-      courses.push({ id: doc.id, ...doc.data() } as Course);
+      courses.push({ 
+        id: doc.id, 
+        ...doc.data(),
+        teacherName: teacherName // Add teacher name to each course
+      } as Course);
     });
     
     return courses;
   } catch (error) {
-      // Error handled
+    console.error('Error fetching courses by teacher:', error);
     throw new Error('Failed to get courses by teacher');
   }
 };

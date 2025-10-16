@@ -49,7 +49,6 @@ export default function RegisterForm({ role, onBack, onSuccess }: RegisterFormPr
     setError("");
 
     try {
-
       const userData: Omit<User, 'isEmailVerified'> = {
         name: formData.name,
         email: formData.email,
@@ -63,10 +62,13 @@ export default function RegisterForm({ role, onBack, onSuccess }: RegisterFormPr
         courseCode: role === "student" ? String(formData.identificationNumber) : undefined
       };
 
+      console.log('Attempting to register user:', { email: formData.email, role });
       await registerUser(formData.email, formData.password, userData);
+      console.log('Registration successful');
       onSuccess();
     } catch (error: any) {
-      setError(error.message);
+      console.error('Registration error:', error);
+      setError(error.message || 'Failed to register. Please try again.');
     } finally {
       setLoading(false);
     }
