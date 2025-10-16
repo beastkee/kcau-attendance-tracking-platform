@@ -357,6 +357,26 @@ export const getCoursesByTeacher = async (teacherId: string): Promise<Course[]> 
   }
 };
 
+// Get courses by student ID
+export const getCoursesByStudent = async (studentId: string): Promise<Course[]> => {
+  try {
+    const coursesRef = collection(db, 'courses');
+    const q = query(coursesRef, where('studentIds', 'array-contains', studentId));
+    
+    const querySnapshot = await getDocs(q);
+    const courses: Course[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      courses.push({ id: doc.id, ...doc.data() } as Course);
+    });
+    
+    return courses;
+  } catch (error) {
+      // Error handled
+    throw new Error('Failed to get courses by student');
+  }
+};
+
 // Update a course
 export const updateCourse = async (courseId: string, courseData: Partial<Course>): Promise<void> => {
   try {

@@ -1,7 +1,19 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { 
+  getCoursesByStudent, 
+  getAttendanceByStudent,
+} from "@/lib/firebaseServices";
+import { useRouter } from "next/navigation";
+import { User } from "@/types/firebase";
+import { Course, AttendanceRecord } from "@/types";
+import { analyzeStudentAttendance, RiskAssessment } from "@/lib/analytics";
 import DashboardLayout from "@/components/ui/DashboardLayout";
 import { Card, StatCard } from "@/components/ui/Card";
+import RiskBadge from "@/components/intelligence/RiskBadge";
 
 const studentSidebarItems = [
   { name: "Dashboard", href: "/student", icon: "📊" },
@@ -13,6 +25,96 @@ const studentSidebarItems = [
 ];
 
 export default function StudentDashboard() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [myCourses, setMyCourses] = useState<Course[]>([]);
+  const [myAttendance, setMyAttendance] = useState<AttendanceRecord[]>([]);
+  const [myRisk, setMyRisk] = useState<RiskAssessment | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        await loadStudentData(user.uid);
+      } else {
+        setIsAuthenticated(false);
+        router.push("/");
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  const loadStudentData = async (studentId: string) => {
+    try {
+      const [coursesData, attendanceData] = await Promise.all([
+        getCoursesByStudent(studentId),
+        getAttendanceByStudent(studentId),
+      ]);
+
+      setMyCourses(coursesData);
+      setMyAttendance(attendanceData);
+
+      const risk = analyzeStudentAttendance(attendanceData);
+      setMyRisk(risk);
+    } catch (error) {
+      // Failed to load data
+    }
+  };
+
+  const getOverallAttendanceRate = () => {
+    if (myAttendance.length === 0) return 0;
+    const presentCount = myAttendance.filter(a => a.status === "present" || a.status === "late").length;
+    return Math.round((presentCount / myAttendance.length) * 100);
+  };
+
+  const getThisWeekAttendance = () => {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    
+    const weekAttendance = myAttendance.filter(a => new Date(a.date) >= oneWeekAgo);
+    const presentCount = weekAttendance.filter(a => a.status === "present" || a.status === "late").length;
+    
+    return { present: presentCount, total: weekAttendance.length };
+  };
+
+  const getAbsentCount = () => {
+    return myAttendance.filter(a => a.status === "absent").length;
+  };
+
+  const getCourseAttendanceRate = (courseId: string) => {
+    const courseAttendance = myAttendance.filter(a => a.courseId === courseId);
+    if (courseAttendance.length === 0) return 0;
+    
+    const presentCount = courseAttendance.filter(a => a.status === "present" || a.status === "late").length;
+    return Math.round((presentCount / courseAttendance.length) * 100);
+  };
+
+  const getRecentAttendance = () => {
+    return myAttendance
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5);
+  };
+
+  const weekAttendance = getThisWeekAttendance();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
   return (
     <DashboardLayout
       title="Student Portal"
@@ -27,115 +129,132 @@ export default function StudentDashboard() {
           <p className="text-gray-600">Track your attendance and academic progress</p>
         </div>
 
+        {/* Risk Assessment Alert */}
+        {myRisk && myRisk.level === "high" && (
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
+            <div className="flex items-start">
+              <span className="text-2xl mr-3">⚠️</span>
+              <div>
+                <h3 className="text-red-900 font-semibold">Attendance Alert - High Risk</h3>
+                <p className="text-red-700 text-sm mt-1">
+                  Your attendance rate is {getOverallAttendanceRate()}%. 
+                  Please improve your attendance to stay on track.
+                </p>
+                <div className="mt-2 text-xs text-red-600">
+                  Risk Score: {myRisk.score.toFixed(0)}/100
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Enrolled Classes" value="5" icon="🏫" color="blue" />
-          <StatCard title="Overall Attendance" value="94%" icon="📊" color="green" />
-          <StatCard title="This Week" value="4/5" icon="📅" color="yellow" />
-          <StatCard title="Absent Days" value="3" icon="❌" color="red" />
+          <StatCard 
+            title="Enrolled Classes" 
+            value={myCourses.length.toString()} 
+            icon="🏫" 
+            color="blue" 
+          />
+          <StatCard 
+            title="Overall Attendance" 
+            value={`${getOverallAttendanceRate()}%`} 
+            icon="📊" 
+            color={getOverallAttendanceRate() >= 75 ? "green" : "red"} 
+          />
+          <StatCard 
+            title="This Week" 
+            value={(() => {
+              const weekAttendance = getThisWeekAttendance();
+              return `${weekAttendance.present}/${weekAttendance.total}`;
+            })()} 
+            icon="📅" 
+            color="yellow" 
+          />
+          <StatCard 
+            title="Absent Days" 
+            value={getAbsentCount().toString()} 
+            icon="❌" 
+            color="red" 
+          />
         </div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Today's Schedule */}
-          <Card title="Today's Schedule">
+          {/* Enrolled Courses */}
+          <Card title="Enrolled Courses">
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border-l-4 border-green-400">
-                <div>
-                  <p className="font-medium text-green-900">Mathematics 101</p>
-                  <p className="text-sm text-green-600">Prof. Smith • Room 205</p>
-                  <p className="text-xs text-green-500">9:00 AM - 10:30 AM</p>
+              {myCourses.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-lg">📚</p>
+                  <p className="text-sm mt-2">No courses enrolled yet</p>
                 </div>
-                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                  Present
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-                <div>
-                  <p className="font-medium text-blue-900">Physics 201</p>
-                  <p className="text-sm text-blue-600">Prof. Johnson • Lab 301</p>
-                  <p className="text-xs text-blue-500">11:00 AM - 12:30 PM</p>
-                </div>
-                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">
-                  Upcoming
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border-l-4 border-purple-400">
-                <div>
-                  <p className="font-medium text-purple-900">Chemistry Lab</p>
-                  <p className="text-sm text-purple-600">Prof. Davis • Lab 205</p>
-                  <p className="text-xs text-purple-500">2:00 PM - 4:00 PM</p>
-                </div>
-                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">
-                  Upcoming
-                </span>
-              </div>
+              ) : (
+                myCourses.map(course => {
+                  const courseRate = getCourseAttendanceRate(course.id || '');
+                  const colorClass = courseRate >= 90 ? 'green' : courseRate >= 75 ? 'blue' : courseRate >= 60 ? 'yellow' : 'red';
+                  
+                  return (
+                    <div key={course.id} className={`flex items-center justify-between p-4 bg-${colorClass}-50 rounded-lg border-l-4 border-${colorClass}-400`}>
+                      <div>
+                        <p className={`font-medium text-${colorClass}-900`}>{course.name}</p>
+                        <p className={`text-sm text-${colorClass}-600`}>
+                          {course.code} • {course.teacherName || 'Teacher TBA'}
+                        </p>
+                        {course.schedule && (
+                          <p className={`text-xs text-${colorClass}-500`}>{course.schedule}</p>
+                        )}
+                      </div>
+                      <span className={`px-3 py-1 bg-${colorClass}-100 text-${colorClass}-800 rounded-full text-sm font-medium`}>
+                        {courseRate}%
+                      </span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </Card>
 
-          {/* Attendance Summary */}
-          <Card title="Attendance Summary">
+          {/* My Courses */}
+          <Card title="My Courses">
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="text-sm font-medium">Mathematics 101</p>
-                  <p className="text-xs text-gray-500">30/32 classes attended</p>
+              {myCourses.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-lg">📚</p>
+                  <p className="text-sm mt-2">No courses enrolled yet</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-green-600 font-medium">94%</p>
-                  <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
-                    <div className="bg-green-600 h-2 rounded-full" style={{width: '94%'}}></div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="text-sm font-medium">Physics 201</p>
-                  <p className="text-xs text-gray-500">28/30 classes attended</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-green-600 font-medium">93%</p>
-                  <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
-                    <div className="bg-green-600 h-2 rounded-full" style={{width: '93%'}}></div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="text-sm font-medium">Chemistry Lab</p>
-                  <p className="text-xs text-gray-500">25/28 classes attended</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-yellow-600 font-medium">89%</p>
-                  <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
-                    <div className="bg-yellow-600 h-2 rounded-full" style={{width: '89%'}}></div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="text-sm font-medium">English Literature</p>
-                  <p className="text-xs text-gray-500">26/30 classes attended</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-yellow-600 font-medium">87%</p>
-                  <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
-                    <div className="bg-yellow-600 h-2 rounded-full" style={{width: '87%'}}></div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="text-sm font-medium">History</p>
-                  <p className="text-xs text-gray-500">22/26 classes attended</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-red-600 font-medium">85%</p>
-                  <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
-                    <div className="bg-red-600 h-2 rounded-full" style={{width: '85%'}}></div>
-                  </div>
-                </div>
-              </div>
+              ) : (
+                myCourses.map(course => {
+                  const courseRate = getCourseAttendanceRate(course.id || '');
+                  const courseRecords = myAttendance.filter(r => r.courseId === course.id);
+                  const present = courseRecords.filter(r => r.status === 'present').length;
+                  const total = courseRecords.length;
+                  
+                  return (
+                    <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium">{course.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {total > 0 ? `${present}/${total} classes attended` : 'No attendance records yet'}
+                        </p>
+                      </div>
+                      {total > 0 && (
+                        <div className="text-right">
+                          <p className={`font-medium ${courseRate >= 75 ? 'text-green-600' : 'text-red-600'}`}>
+                            {courseRate}%
+                          </p>
+                          <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
+                            <div 
+                              className={`h-2 rounded-full ${courseRate >= 75 ? 'bg-green-600' : 'bg-red-600'}`} 
+                              style={{width: `${Math.min(courseRate, 100)}%`}}
+                            ></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </div>
           </Card>
         </div>
@@ -183,69 +302,88 @@ export default function StudentDashboard() {
 
         {/* Recent Activity & Notifications */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card title="Recent Activity">
+          <Card title="Recent Attendance">
             <div className="space-y-3">
-              <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                <span className="text-green-600">✅</span>
-                <div>
-                  <p className="text-sm font-medium">Attended Mathematics 101</p>
-                  <p className="text-xs text-gray-500">Today at 9:00 AM</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                <span className="text-green-600">✅</span>
-                <div>
-                  <p className="text-sm font-medium">Attended Physics 201</p>
-                  <p className="text-xs text-gray-500">Yesterday at 11:00 AM</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-red-50 rounded-lg">
-                <span className="text-red-600">❌</span>
-                <div>
-                  <p className="text-sm font-medium">Missed Chemistry Lab</p>
-                  <p className="text-xs text-gray-500">2 days ago at 2:00 PM</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                <span className="text-green-600">✅</span>
-                <div>
-                  <p className="text-sm font-medium">Attended English Literature</p>
-                  <p className="text-xs text-gray-500">3 days ago at 1:00 PM</p>
-                </div>
-              </div>
+              {(() => {
+                const recentRecords = getRecentAttendance();
+                
+                if (recentRecords.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-gray-500">
+                      <p className="text-lg">📋</p>
+                      <p className="text-sm mt-2">No attendance records yet</p>
+                    </div>
+                  );
+                }
+                
+                return recentRecords.map(record => {
+                  const course = myCourses.find(c => c.id === record.courseId);
+                  const statusConfig = {
+                    present: { icon: '✅', color: 'green', label: 'Present' },
+                    absent: { icon: '❌', color: 'red', label: 'Absent' },
+                    late: { icon: '⏰', color: 'yellow', label: 'Late' }
+                  };
+                  const config = statusConfig[record.status];
+                  
+                  return (
+                    <div key={record.id} className={`flex items-center space-x-3 p-3 bg-${config.color}-50 rounded-lg`}>
+                      <span className={`text-${config.color}-600`}>{config.icon}</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{config.label} - {course?.name || 'Unknown Course'}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(record.date).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </Card>
 
-          <Card title="Notifications & Reminders">
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-                <span className="text-blue-600">📅</span>
-                <div>
-                  <p className="text-sm font-medium text-blue-900">Upcoming Class</p>
-                  <p className="text-xs text-blue-600">Physics 201 starts in 30 minutes</p>
+          <Card title="Performance Overview">
+            <div className="space-y-4">
+              {myRisk && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Risk Assessment</span>
+                    <RiskBadge level={myRisk.level} />
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    Risk Score: {myRisk.score.toFixed(0)}/100
+                  </div>
+                </div>
+              )}
+              
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">Overall Attendance</p>
+                    <p className="text-xs text-blue-600">{myAttendance.length} total records</p>
+                  </div>
+                  <div className="text-2xl font-bold text-blue-900">
+                    {getOverallAttendanceRate()}%
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-400">
-                <span className="text-yellow-600">⚠️</span>
-                <div>
-                  <p className="text-sm font-medium text-yellow-900">Attendance Warning</p>
-                  <p className="text-xs text-yellow-600">History class attendance below 90%</p>
+
+              {myCourses.length > 0 && (
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-900">Enrolled Courses</p>
+                      <p className="text-xs text-green-600">Active this semester</p>
+                    </div>
+                    <div className="text-2xl font-bold text-green-900">
+                      {myCourses.length}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
-                <span className="text-green-600">🎉</span>
-                <div>
-                  <p className="text-sm font-medium text-green-900">Achievement</p>
-                  <p className="text-xs text-green-600">Perfect attendance this month!</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg border-l-4 border-purple-400">
-                <span className="text-purple-600">📋</span>
-                <div>
-                  <p className="text-sm font-medium text-purple-900">Assignment Due</p>
-                  <p className="text-xs text-purple-600">Math homework due tomorrow</p>
-                </div>
-              </div>
+              )}
             </div>
           </Card>
         </div>
