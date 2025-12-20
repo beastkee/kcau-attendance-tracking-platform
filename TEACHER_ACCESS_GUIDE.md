@@ -1,7 +1,9 @@
 # Teacher Access to Allocated Classes - Setup Guide
 
+## Platform: KCAU Attendance Tracking Platform
+
 ## Overview
-Teachers can now fully access their allocated classes assigned by the admin. This guide explains how the system works and how to verify it's functioning correctly.
+Teachers can now fully access their allocated classes assigned by the admin. This guide explains how the system works and how to verify it's functioning correctly within KCAU.
 
 ## How It Works
 

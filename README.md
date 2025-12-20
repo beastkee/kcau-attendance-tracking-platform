@@ -1,12 +1,12 @@
-# EduTrack Academic Intelligence Platform
+# KCAU Attendance Tracking Platform
 
-## Predictive Analytics for Student Success
+## Comprehensive Student Attendance Management System
 
-A comprehensive academic intelligence platform that transforms traditional attendance tracking into a powerful tool for student success prediction and early intervention.
+A comprehensive attendance tracking platform that provides real-time monitoring, predictive analytics, and early intervention support for student success.
 
 ## 🎯 Project Vision
 
-EduTrack addresses the critical gap in educational technology by providing:
+KCAU Attendance Tracking Platform addresses the critical need for comprehensive student attendance management by providing:
 - **Predictive Analytics** for identifying at-risk students
 - **Real-time Intelligence Dashboards** for educators and administrators
 - **Automated Early Intervention** systems for proactive academic support
@@ -14,16 +14,16 @@ EduTrack addresses the critical gap in educational technology by providing:
 
 ## 🚀 Key Features
 
-### Academic Intelligence Engine
+### Attendance Tracking Engine
+- Real-time attendance monitoring and logging
 - Statistical analysis of attendance patterns and trends
 - Risk assessment using threshold-based algorithms
-- Correlation analysis between attendance and performance
 - Automated early warning system for intervention opportunities
 
-### Multi-Role Intelligence Dashboards
-- **Admin Intelligence Hub**: Institutional analytics and oversight
-- **Teacher Analytics Dashboard**: Class-level insights and student risk assessment
-- **Student Success Portal**: Personal academic analytics and progress tracking
+### Multi-Role Dashboards
+- **Admin Dashboard**: Institutional analytics and oversight
+- **Teacher Dashboard**: Class-level insights and student tracking
+- **Student Portal**: Personal attendance analytics and progress tracking
 
 ### Real-time Data Processing
 - Live attendance tracking with pattern recognition
