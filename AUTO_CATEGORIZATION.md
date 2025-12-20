@@ -1,7 +1,7 @@
-# Auto-Categorization Dashboard - Admin Intelligence Hub
+# Auto-Categorization Dashboard - Admin Control Center
 
 ## Overview
-The Admin Intelligence Hub (`/admin/page.tsx`) now features **automatic user categorization** that pulls all users from Firestore and intelligently organizes them by role in real-time. Admins can view, edit, and manage users with quick-action buttons directly from the dashboard.
+The Admin Control Center (`/admin/page.tsx`) now features **automatic user categorization** that pulls all users from Firestore and intelligently organizes them by role in real-time. Admins can view, edit, and manage users with quick-action buttons directly from the dashboard within the KCAU Attendance Tracking Platform.
 
 ## Key Features
 

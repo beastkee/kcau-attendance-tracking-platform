@@ -1,7 +1,7 @@
 # 🎉 Auto-Categorization Dashboard - Implementation Complete!
 
 ## Overview
-Successfully implemented an **intelligent auto-categorization system** for the Admin Intelligence Hub that automatically pulls all users from Firestore, categorizes them by role, and provides quick editing capabilities—all without manual intervention.
+Successfully implemented an **intelligent auto-categorization system** for the Admin Control Center that automatically pulls all users from Firestore, categorizes them by role, and provides quick editing capabilities—all without manual intervention within KCAU Attendance Tracking Platform.
 
 ## What Was Built
 

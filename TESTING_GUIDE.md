@@ -1,5 +1,7 @@
 # Testing Guide - Analytics & Risk Assessment
 
+## Platform: KCAU Attendance Tracking Platform
+
 ## Prerequisites
 Before testing the analytics features, ensure you have:
 - Firebase project configured

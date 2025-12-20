@@ -200,7 +200,7 @@ export default function AdminPage() {
 
   return (
     <DashboardLayout
-      title="EduTrack Intelligence Hub"
+      title="KCAU Admin Dashboard"
       userRole="admin"
       userName="Admin User"
       sidebarItems={adminSidebarItems}
@@ -208,7 +208,7 @@ export default function AdminPage() {
       <div className="space-y-6">
         {/* Page Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">EduTrack Intelligence Hub</h1>
+          <h1 className="text-3xl font-bold text-gray-900">KCAU Admin Dashboard</h1>
           <p className="text-gray-600">Automated User Categorization & Real-Time Analytics</p>
         </div>
 

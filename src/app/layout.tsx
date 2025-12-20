@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EduTrack Academic Intelligence Platform",
-  description: "Predictive Analytics for Student Success - Real-time attendance tracking with behavioral pattern analysis and automated early intervention systems",
+  title: "KCAU Attendance Tracking Platform",
+  description: "Comprehensive Student Attendance Management System - Real-time attendance tracking with behavioral pattern analysis and automated early intervention systems",
 };
 
 export default function RootLayout({
