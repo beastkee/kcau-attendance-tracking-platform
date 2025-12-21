@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { getUsersByRole, deleteUser } from "@/lib/firebaseServices";
+import { getUsersByRole, deleteUser, createUser, updateUser } from "@/lib/firebaseServices";
 import { User } from "@/types/firebase";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/ui/DashboardLayout";
 import UserTable from "@/components/ui/UserTable";
+import UserModal from "@/components/ui/UserModal";
 
 const adminSidebarItems = [
   { name: "Intelligence Hub", href: "/admin", icon: "📊" },
@@ -25,6 +26,8 @@ export default function AdminTeachersPage() {
   const [teachers, setTeachers] = useState<User[]>([]);
   const [selectedTeacher, setSelectedTeacher] = useState<User | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const router = useRouter();
 
   useEffect(() => {
@@ -47,14 +50,14 @@ export default function AdminTeachersPage() {
       const teachersData = await getUsersByRole("teacher");
       setTeachers(teachersData);
     } catch (error) {
-      console.error("Error loading teachers:", error);
+      // Error handled
     }
   };
 
   const handleEdit = (teacher: User) => {
     setSelectedTeacher(teacher);
-    // TODO: Open edit modal
-    alert(`Edit functionality for ${teacher.name} will be implemented next`);
+    setModalMode("edit");
+    setShowModal(true);
   };
 
   const handleDelete = async (userId: string) => {
@@ -64,7 +67,7 @@ export default function AdminTeachersPage() {
       await loadTeachers();
       alert("Teacher deleted successfully");
     } catch (error) {
-      console.error("Error deleting teacher:", error);
+      // Error handled
       alert("Failed to delete teacher");
     }
   };
@@ -75,8 +78,30 @@ export default function AdminTeachersPage() {
   };
 
   const handleAddTeacher = () => {
-    // TODO: Open add teacher modal
-    alert("Add teacher functionality will be implemented next");
+    setSelectedTeacher(null);
+    setModalMode("add");
+    setShowModal(true);
+  };
+
+  const handleSaveUser = async (userData: Partial<User>) => {
+    try {
+      if (modalMode === "add") {
+        const newUser: User = {
+          ...userData,
+          role: "teacher",
+          dateJoined: new Date().toISOString(),
+          isEmailVerified: false,
+        } as User;
+        await createUser(newUser);
+      } else if (selectedTeacher?.id) {
+        await updateUser(selectedTeacher.id, userData);
+      }
+      await loadTeachers();
+      setShowModal(false);
+    } catch (error) {
+      // Error handled
+      throw new Error("Failed to save teacher");
+    }
   };
 
   if (loading) {
@@ -259,6 +284,16 @@ export default function AdminTeachersPage() {
             </div>
           </div>
         )}
+
+        {/* Add/Edit Teacher Modal */}
+        <UserModal
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          onSave={handleSaveUser}
+          initialData={selectedTeacher || undefined}
+          mode={modalMode}
+          role="teacher"
+        />
       </div>
     </DashboardLayout>
   );

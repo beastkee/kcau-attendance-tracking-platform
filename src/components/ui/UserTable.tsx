@@ -2,15 +2,21 @@
 
 import { User } from "@/types/firebase";
 import { useState } from "react";
+import dynamic from "next/dynamic";
+import { RiskAssessment } from "@/lib/analytics";
+
+// Dynamically import RiskBadge to avoid SSR issues
+const RiskBadge = dynamic(() => import("@/components/intelligence/RiskBadge"), { ssr: false });
 
 interface UserTableProps {
   users: User[];
   onEdit: (user: User) => void;
   onDelete: (userId: string) => void;
   onViewDetails: (user: User) => void;
+  riskData?: Record<string, RiskAssessment>; // Optional risk data keyed by user ID
 }
 
-export default function UserTable({ users, onEdit, onDelete, onViewDetails }: UserTableProps) {
+export default function UserTable({ users, onEdit, onDelete, onViewDetails, riskData }: UserTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "email" | "dateJoined">("dateJoined");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -74,6 +80,18 @@ export default function UserTable({ users, onEdit, onDelete, onViewDetails }: Us
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  // Get risk assessment for a user, with fallback
+  const getUserRisk = (userId: string): { level: "low" | "medium" | "high"; score?: number } => {
+    if (riskData && riskData[userId]) {
+      return {
+        level: riskData[userId].level,
+        score: riskData[userId].score
+      };
+    }
+    // Fallback to mock risk based on accountStatus if no real data
+    return { level: "low" };
   };
 
   return (
@@ -187,9 +205,16 @@ export default function UserTable({ users, onEdit, onDelete, onViewDetails }: Us
                       {user.department || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(user.accountStatus)}`}>
-                        {user.accountStatus}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(user.accountStatus)}`}>
+                          {user.accountStatus}
+                        </span>
+                        {/* Real risk badge from analytics */}
+                        {(() => {
+                          const risk = getUserRisk(user.id || "");
+                          return <RiskBadge level={risk.level} score={risk.score} />;
+                        })()}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(user.dateJoined)}

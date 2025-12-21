@@ -53,19 +53,22 @@ export default function RegisterForm({ role, onBack, onSuccess }: RegisterFormPr
         name: formData.name,
         email: formData.email,
         role: role,
-        identificationNumber: parseInt(formData.identificationNumber),
+        identificationNumber: String(formData.identificationNumber),
         phoneNumber: formData.phoneNumber,
         accountStatus: "active",
-        dateJoined: new Date(),
+        dateJoined: new Date().toISOString(),
         department: role === "teacher" ? formData.department : undefined,
         courses: role === "student" ? formData.courses.filter(c => c) : undefined,
-        courseCode: role === "student" ? parseInt(formData.identificationNumber) : 0
+        courseCode: role === "student" ? String(formData.identificationNumber) : undefined
       };
 
+      console.log('Attempting to register user:', { email: formData.email, role });
       await registerUser(formData.email, formData.password, userData);
+      console.log('Registration successful');
       onSuccess();
     } catch (error: any) {
-      setError(error.message);
+      console.error('Registration error:', error);
+      setError(error.message || 'Failed to register. Please try again.');
     } finally {
       setLoading(false);
     }

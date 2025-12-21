@@ -36,6 +36,7 @@ export default function Home() {
         router.push(`/${selectedRole}`);
       }
     } catch (error) {
+      // Error handled
       setError("Invalid email or password");
     } finally {
       setLoading(false);
@@ -64,10 +65,10 @@ export default function Home() {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            EduTrack Academic Intelligence
+            KCAU Attendance Tracking
           </h1>
           <p className="text-gray-600 text-sm">
-            Predictive Analytics for Student Success
+            Comprehensive Student Attendance Management
           </p>
           <p className="text-gray-500 text-xs mt-1">
             Real-time attendance tracking with behavioral pattern analysis
@@ -168,7 +169,7 @@ export default function Home() {
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
-                Need access to EduTrack?{" "}
+                Need access to KCAU?{" "}
                 <button
                   onClick={() => setPageState("register")}
                   className="text-blue-600 hover:text-blue-800 font-medium"
@@ -190,7 +191,7 @@ export default function Home() {
 
         {/* Footer */}
         <div className="text-center text-sm text-gray-500">
-          <p>© 2025 EduTrack Academic Intelligence Platform. All rights reserved.</p>
+          <p>© 2025 KCAU Attendance Tracking Platform. All rights reserved.</p>
         </div>
       </div>
     </div>

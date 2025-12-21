@@ -18,9 +18,10 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 
-//export const auth = getAuth(app);
+// Analytics only works in browser
+const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
+
 export const auth = getAuth();
 export const db = getFirestore(app);
 export const storage = getStorage(app);

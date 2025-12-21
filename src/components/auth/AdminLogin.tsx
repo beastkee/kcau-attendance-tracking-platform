@@ -19,6 +19,7 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
       await loginUser(email, password);
       onLoginSuccess();
     } catch (error) {
+      // Error handled
       setError("Invalid admin credentials");
     } finally {
       setLoading(false);
