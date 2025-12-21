@@ -423,8 +423,8 @@ export const updateCourse = async (courseId: string, courseData: Partial<Course>
       updatedAt: new Date().toISOString(),
     });
   } catch (error) {
-      // Error handled
-    throw new Error('Failed to update course');
+    console.error('Error updating course:', error);
+    throw new Error(`Failed to update course: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
 
