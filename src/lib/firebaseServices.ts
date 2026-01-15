@@ -590,3 +590,188 @@ export const deleteAttendanceRecord = async (recordId: string): Promise<void> =>
     throw new Error('Failed to delete attendance record');
   }
 };
+
+// ==================== INTERVENTION MANAGEMENT ====================
+
+import type { Intervention, InterventionTrigger } from './interventions';
+
+// Create new intervention
+export const createIntervention = async (intervention: Omit<Intervention, 'id'>): Promise<string> => {
+  try {
+    const intervRef = collection(db, 'interventions');
+    const docRef = await addDoc(intervRef, {
+      ...intervention,
+      triggeredAt: new Date(intervention.triggeredAt),
+      acknowledgedAt: intervention.acknowledgedAt ? new Date(intervention.acknowledgedAt) : null,
+      resolvedAt: intervention.resolvedAt ? new Date(intervention.resolvedAt) : null,
+      followUpDate: intervention.followUpDate ? new Date(intervention.followUpDate) : null,
+      createdAt: new Date(),
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error creating intervention:', error);
+    throw new Error('Failed to create intervention');
+  }
+};
+
+// Get all interventions for a student
+export const getStudentInterventions = async (studentId: string): Promise<Intervention[]> => {
+  try {
+    const q = query(
+      collection(db, 'interventions'),
+      where('studentId', '==', studentId),
+      orderBy('triggeredAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      triggeredAt: doc.data().triggeredAt?.toDate() || new Date(),
+      acknowledgedAt: doc.data().acknowledgedAt?.toDate(),
+      resolvedAt: doc.data().resolvedAt?.toDate(),
+      followUpDate: doc.data().followUpDate?.toDate(),
+    })) as Intervention[];
+  } catch (error) {
+    console.error('Error fetching student interventions:', error);
+    throw new Error('Failed to fetch interventions');
+  }
+};
+
+// Get active interventions (triggered, acknowledged, in-progress)
+export const getActiveInterventions = async (): Promise<Intervention[]> => {
+  try {
+    const q = query(
+      collection(db, 'interventions'),
+      where('status', 'in', ['triggered', 'acknowledged', 'in-progress']),
+      orderBy('triggeredAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      triggeredAt: doc.data().triggeredAt?.toDate() || new Date(),
+      acknowledgedAt: doc.data().acknowledgedAt?.toDate(),
+      resolvedAt: doc.data().resolvedAt?.toDate(),
+      followUpDate: doc.data().followUpDate?.toDate(),
+    })) as Intervention[];
+  } catch (error) {
+    console.error('Error fetching active interventions:', error);
+    throw new Error('Failed to fetch active interventions');
+  }
+};
+
+// Get high-priority interventions (high risk, escalated)
+export const getHighPriorityInterventions = async (): Promise<Intervention[]> => {
+  try {
+    const q = query(
+      collection(db, 'interventions'),
+      where('riskScore', '>=', 70),
+      where('status', 'in', ['triggered', 'escalated']),
+      orderBy('riskScore', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      triggeredAt: doc.data().triggeredAt?.toDate() || new Date(),
+      acknowledgedAt: doc.data().acknowledgedAt?.toDate(),
+      resolvedAt: doc.data().resolvedAt?.toDate(),
+      followUpDate: doc.data().followUpDate?.toDate(),
+    })) as Intervention[];
+  } catch (error) {
+    console.error('Error fetching high-priority interventions:', error);
+    throw new Error('Failed to fetch high-priority interventions');
+  }
+};
+
+// Update intervention status
+export const updateInterventionStatus = async (
+  interventionId: string,
+  status: Intervention['status'],
+  notes?: string
+): Promise<void> => {
+  try {
+    const docRef = doc(db, 'interventions', interventionId);
+    const updateData: any = { status };
+
+    if (status === 'acknowledged') {
+      updateData.acknowledgedAt = new Date();
+    } else if (status === 'resolved') {
+      updateData.resolvedAt = new Date();
+    }
+
+    if (notes) {
+      updateData.notes = notes;
+    }
+
+    await updateDoc(docRef, updateData);
+  } catch (error) {
+    console.error('Error updating intervention:', error);
+    throw new Error('Failed to update intervention status');
+  }
+};
+
+// Escalate intervention
+export const escalateIntervention = async (
+  interventionId: string,
+  escalationReason: string,
+  counselorId?: string
+): Promise<void> => {
+  try {
+    const docRef = doc(db, 'interventions', interventionId);
+    await updateDoc(docRef, {
+      status: 'escalated',
+      escalationReason,
+      counselorId: counselorId || null,
+    });
+  } catch (error) {
+    console.error('Error escalating intervention:', error);
+    throw new Error('Failed to escalate intervention');
+  }
+};
+
+// Get intervention statistics
+export const getInterventionStats = async (): Promise<{
+  total: number;
+  active: number;
+  resolved: number;
+  escalated: number;
+  averageResolutionTime: number;
+}> => {
+  try {
+    const allQ = collection(db, 'interventions');
+    const allSnapshot = await getDocs(allQ);
+    const total = allSnapshot.size;
+
+    const activeQ = query(allQ, where('status', 'in', ['triggered', 'acknowledged', 'in-progress']));
+    const activeSnapshot = await getDocs(activeQ);
+    const active = activeSnapshot.size;
+
+    const resolvedQ = query(allQ, where('status', '==', 'resolved'));
+    const resolvedSnapshot = await getDocs(resolvedQ);
+    const resolved = resolvedSnapshot.size;
+
+    const escalatedQ = query(allQ, where('status', '==', 'escalated'));
+    const escalatedSnapshot = await getDocs(escalatedQ);
+    const escalated = escalatedSnapshot.size;
+
+    // Calculate average resolution time
+    let totalTime = 0;
+    let resolvedCount = 0;
+    resolvedSnapshot.docs.forEach((doc) => {
+      const data = doc.data();
+      if (data.resolvedAt && data.triggeredAt) {
+        const time = data.resolvedAt.toDate().getTime() - data.triggeredAt.toDate().getTime();
+        totalTime += time;
+        resolvedCount++;
+      }
+    });
+
+    const averageResolutionTime = resolvedCount > 0 ? totalTime / resolvedCount / (1000 * 60 * 60) : 0; // hours
+
+    return { total, active, resolved, escalated, averageResolutionTime };
+  } catch (error) {
+    console.error('Error fetching intervention stats:', error);
+    throw new Error('Failed to fetch intervention statistics');
+  }
+};
