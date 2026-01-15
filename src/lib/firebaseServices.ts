@@ -13,7 +13,9 @@ import {
   deleteDoc,
   getDocs,
   query,
-  where 
+  where,
+  orderBy,
+  limit
 } from 'firebase/firestore';
 
 // Import Auth functions
