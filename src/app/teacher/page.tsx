@@ -20,10 +20,7 @@ const teacherSidebarItems = [
   { name: "Dashboard", href: "/teacher", icon: "📊" },
   { name: "My Classes", href: "/teacher/classes", icon: "🏫" },
   { name: "Take Attendance", href: "/teacher/attendance", icon: "📋" },
-  { name: "View Reports", href: "/teacher/reports", icon: "📈" },
-  { name: "Students", href: "/teacher/students", icon: "👥" },
-  { name: "Schedule", href: "/teacher/schedule", icon: "📅" },
-  { name: "Profile", href: "/teacher/profile", icon: "👤" },
+  { name: "Class Reports", href: "/teacher/reports", icon: "📈" },
 ];
 
 interface ClassRiskSummary {

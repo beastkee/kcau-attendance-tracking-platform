@@ -18,10 +18,8 @@ import RiskBadge from "@/components/intelligence/RiskBadge";
 const studentSidebarItems = [
   { name: "Dashboard", href: "/student", icon: "📊" },
   { name: "My Classes", href: "/student/classes", icon: "🏫" },
-  { name: "Attendance", href: "/student/attendance", icon: "📋" },
-  { name: "Schedule", href: "/student/schedule", icon: "📅" },
+  { name: "Attendance History", href: "/student/attendance", icon: "📋" },
   { name: "Reports", href: "/student/reports", icon: "📈" },
-  { name: "Profile", href: "/student/profile", icon: "👤" },
 ];
 
 export default function StudentDashboard() {
