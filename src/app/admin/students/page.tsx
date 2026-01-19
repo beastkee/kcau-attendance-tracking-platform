@@ -17,6 +17,7 @@ const adminSidebarItems = [
   { name: "Teachers", href: "/admin/teachers", icon: "👨‍🏫" },
   { name: "Classes", href: "/admin/classes", icon: "🏫" },
   { name: "Auto-Assign Students", href: "/admin/assignment", icon: "⚙️" },
+  { name: "Assign Teachers to Classes", href: "/admin/teacher-assignment", icon: "🎓" },
   { name: "Analytics", href: "/admin/analytics", icon: "📈" },
   { name: "Predictive Reports", href: "/admin/reports", icon: "🎯" },
 ];
