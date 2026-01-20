@@ -1,4 +1,7 @@
 {
+  "projects": {
+    "default": "studentattendanceportal-37b5a"
+  },
   "functions": [
     {
       "source": "functions",
