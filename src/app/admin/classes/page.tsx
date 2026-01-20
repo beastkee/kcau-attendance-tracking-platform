@@ -224,7 +224,7 @@ export default function AdminClassesPage() {
                 {classes.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                      No classes created yet. Click "Add Class" to get started.
+                      No classes created yet. Click &quot;Add Class&quot; to get started.
                     </td>
                   </tr>
                 ) : (

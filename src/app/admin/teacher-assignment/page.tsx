@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import {
   getUsersByRole,
@@ -44,7 +44,7 @@ export default function TeacherAssignmentPage() {
     "expertise-first" | "load-balanced" | "availability-first"
   >("expertise-first");
   const [showResultsModal, setShowResultsModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{ uid: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const router = useRouter();
 
   const stats = getTeacherAssignmentStatistics(courses, teachers);
@@ -198,7 +198,7 @@ export default function TeacherAssignmentPage() {
             title="Total Teachers"
             value={stats.totalTeachers.toString()}
             icon="👨‍🏫"
-            color="purple"
+            color="green"
           />
           <StatCard
             title="Avg Classes"

@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import {
   getUsersByRole,
   getAllCourses,
   enrollStudent,
-  unenrollStudent,
 } from "@/lib/firebaseServices";
 import { User } from "@/types/firebase";
 import { Course } from "@/types";
@@ -46,7 +45,7 @@ export default function StudentAssignmentPage() {
   );
   const [assignmentMethod, setAssignmentMethod] = useState<"direct" | "courses">("courses");
   const [showResultsModal, setShowResultsModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const router = useRouter();
 
   const stats = getAssignmentStatistics(students, teachers, courses);
@@ -195,7 +194,7 @@ export default function StudentAssignmentPage() {
             title="Total Teachers"
             value={stats.totalTeachers.toString()}
             icon="👨‍🏫"
-            color="purple"
+            color="green"
           />
           <StatCard
             title="Avg Per Teacher"
@@ -206,14 +205,11 @@ export default function StudentAssignmentPage() {
         </div>
 
         {/* Assignment Configuration */}
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Assignment Configuration</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Assignment Strategy
+        <Card title="Assignment Configuration">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Assignment Strategy
                 </label>
                 <select
                   value={assignmentStrategy}
@@ -269,17 +265,14 @@ export default function StudentAssignmentPage() {
             >
               {isAssigning ? "Assigning..." : "Start Assignment"}
             </button>
-          </div>
         </Card>
 
         {/* Current Load Distribution */}
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Load Distribution</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Load Balance Score: <strong>{stats.loadBalance.toFixed(2)}</strong> (0 = perfect,
-              1 = unbalanced)
-            </p>
+        <Card title="Current Load Distribution">
+          <p className="text-sm text-gray-600 mb-4">
+            Load Balance Score: <strong>{stats.loadBalance.toFixed(2)}</strong> (0 = perfect,
+            1 = unbalanced)
+          </p>
 
             {stats.totalTeachers === 0 ? (
               <p className="text-gray-600 text-center py-8">No teachers available</p>
@@ -295,7 +288,7 @@ export default function StudentAssignmentPage() {
                     <div key={teacherId}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-medium text-gray-900">
-                          {teacher?.displayName || teacher?.email || "Unknown"}
+                          {teacher?.name || teacher?.email || "Unknown"}
                         </span>
                         <span className="text-sm text-gray-600">
                           {studentCount} student{studentCount !== 1 ? "s" : ""} ({percentage}%)
@@ -312,42 +305,36 @@ export default function StudentAssignmentPage() {
                 })}
               </div>
             )}
-          </div>
         </Card>
 
         {/* Unassigned Students List */}
         {unassignedStudents.length > 0 && (
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Unassigned Students ({unassignedStudents.length})
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Name</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Email</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Status</th>
+          <Card title={`Unassigned Students (${unassignedStudents.length})`}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 font-semibold text-gray-900">Name</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-900">Email</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-900">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {unassignedStudents.slice(0, 10).map((student) => (
+                    <tr key={student.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4 font-medium text-gray-900">
+                        {student.name || "Unknown"}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">{student.email}</td>
+                      <td className="py-3 px-4">
+                        <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          Pending Assignment
+                        </span>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {unassignedStudents.slice(0, 10).map((student) => (
-                      <tr key={student.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-3 px-4 font-medium text-gray-900">
-                          {student.displayName || "Unknown"}
-                        </td>
-                        <td className="py-3 px-4 text-gray-600">{student.email}</td>
-                        <td className="py-3 px-4">
-                          <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            Pending Assignment
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
               {unassignedStudents.length > 10 && (
                 <p className="text-xs text-gray-600 mt-4 text-center">
                   Showing 10 of {unassignedStudents.length} unassigned students
@@ -360,10 +347,9 @@ export default function StudentAssignmentPage() {
         {/* Assignment Results Modal */}
         {showResultsModal && assignmentResult && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <Card>
-              <div className="p-6 max-w-2xl max-h-[80vh] overflow-y-auto">
+            <Card title="Assignment Results">
+              <div className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <div className="mb-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Assignment Results</h3>
                   <div className="flex gap-4 mt-4">
                     <div className="bg-green-50 p-3 rounded-lg flex-1">
                       <p className="text-green-700 text-sm">Successful</p>
@@ -413,7 +399,7 @@ export default function StudentAssignmentPage() {
                       const teacher = teachers.find((t) => t.id === teacherId);
                       return (
                         <div key={teacherId} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <span className="text-sm">{teacher?.displayName || teacherId}</span>
+                          <span className="text-sm">{teacher?.name || teacherId}</span>
                           <span className="font-semibold">{count} students</span>
                         </div>
                       );
