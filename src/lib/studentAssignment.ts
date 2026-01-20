@@ -126,7 +126,7 @@ export async function assignStudentsToTeachers(
       assignmentsFailed: unassignedStudents.length,
       details: unassignedStudents.map(student => ({
         studentId: student.id!,
-        studentName: student.displayName || student.email,
+        studentName: student.name || student.email,
         teacherId: '',
         teacherName: '',
         status: 'failed' as const,
@@ -179,7 +179,7 @@ export async function assignStudentsToTeachers(
       assignmentsFailed++;
       details.push({
         studentId: student.id!,
-        studentName: student.displayName || student.email,
+        studentName: student.name || student.email,
         teacherId: '',
         teacherName: '',
         status: 'failed' as const,
@@ -198,18 +198,18 @@ export async function assignStudentsToTeachers(
       assignmentsCreated++;
       details.push({
         studentId: student.id!,
-        studentName: student.displayName || student.email,
+        studentName: student.name || student.email,
         teacherId: assignedTeacher.id,
-        teacherName: assignedTeacher.displayName || assignedTeacher.email,
+        teacherName: assignedTeacher.name || assignedTeacher.email,
         status: 'success' as const,
       });
     } catch (error) {
       assignmentsFailed++;
       details.push({
         studentId: student.id!,
-        studentName: student.displayName || student.email,
+        studentName: student.name || student.email,
         teacherId: assignedTeacher.id,
-        teacherName: assignedTeacher.displayName || assignedTeacher.email,
+        teacherName: assignedTeacher.name || assignedTeacher.email,
         status: 'failed' as const,
         reason: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -298,7 +298,7 @@ export async function distributeStudentsAcrossCourses(
       assignmentsFailed++;
       details.push({
         studentId: student.id!,
-        studentName: student.displayName || student.email,
+        studentName: student.name || student.email,
         teacherId: selectedCourse?.teacherId || '',
         teacherName: '',
         status: 'failed' as const,
@@ -318,7 +318,7 @@ export async function distributeStudentsAcrossCourses(
       assignmentsCreated++;
       details.push({
         studentId: student.id!,
-        studentName: student.displayName || student.email,
+        studentName: student.name || student.email,
         teacherId: selectedCourse.teacherId,
         teacherName: '',
         status: 'success' as const,
@@ -327,7 +327,7 @@ export async function distributeStudentsAcrossCourses(
       assignmentsFailed++;
       details.push({
         studentId: student.id!,
-        studentName: student.displayName || student.email,
+        studentName: student.name || student.email,
         teacherId: selectedCourse.teacherId,
         teacherName: '',
         status: 'failed' as const,

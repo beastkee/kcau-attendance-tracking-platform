@@ -209,15 +209,12 @@ export default function TeacherAssignmentPage() {
         </div>
 
         {/* Assignment Configuration */}
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Assignment Configuration</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Assignment Strategy
-                </label>
+        <Card title="Assignment Configuration">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Assignment Strategy
+              </label>
                 <select
                   value={assignmentStrategy}
                   onChange={(e) =>
@@ -286,16 +283,13 @@ export default function TeacherAssignmentPage() {
                 {isRebalancing ? "Rebalancing..." : "Rebalance All Classes"}
               </button>
             </div>
-          </div>
         </Card>
 
         {/* Current Load Distribution */}
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Load Distribution</h3>
-            {stats.totalTeachers === 0 ? (
-              <p className="text-gray-600 text-center py-8">No teachers available</p>
-            ) : (
+        <Card title="Current Load Distribution">
+          {stats.totalTeachers === 0 ? (
+            <p className="text-gray-600 text-center py-8">No teachers available</p>
+          ) : (
               <div className="space-y-4">
                 {Object.entries(stats.teacherLoads).map(([teacherId, classCount]) => {
                   const teacher = teachers.find((t) => t.id === teacherId);
@@ -330,20 +324,15 @@ export default function TeacherAssignmentPage() {
                 })}
               </div>
             )}
-          </div>
         </Card>
 
         {/* Unassigned Classes List */}
         {unassignedClasses.length > 0 && (
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Unassigned Classes ({unassignedClasses.length})
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200">
+          <Card title={`Unassigned Classes (${unassignedClasses.length})`}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
                       <th className="text-left py-3 px-4 font-semibold text-gray-900">Class Name</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900">Code</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900">Students</th>
@@ -373,15 +362,14 @@ export default function TeacherAssignmentPage() {
                   Showing 10 of {unassignedClasses.length} unassigned classes
                 </p>
               )}
-            </div>
           </Card>
         )}
 
         {/* Assignment Results Modal */}
         {showResultsModal && assignmentResult && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <Card>
-              <div className="p-6 max-w-3xl max-h-[80vh] overflow-y-auto">
+            <Card title="Assignment Results">
+              <div className="max-w-3xl max-h-[80vh] overflow-y-auto">
                 <div className="mb-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Assignment Results</h3>
                   <div className="flex gap-4 mt-4">

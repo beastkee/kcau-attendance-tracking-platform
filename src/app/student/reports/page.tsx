@@ -96,7 +96,14 @@ export default function StudentReportsPage() {
     }
   };
 
-  const getTrendDirection = (trend: string): string => {
+  const getTrendDirection = (trend: string | number): string => {
+    // If number (slope), convert to direction
+    if (typeof trend === 'number') {
+      if (trend > 0.1) return "📈 Improving";
+      if (trend < -0.1) return "📉 Declining";
+      return "➡️ Stable";
+    }
+    // Otherwise handle string
     switch (trend) {
       case "improving":
         return "📈 Improving";
@@ -152,11 +159,10 @@ export default function StudentReportsPage() {
 
         {/* Overall Risk Summary */}
         {overallRisk && (
-          <Card>
+          <Card title="Overall Risk Assessment">
             <div className={`p-6 rounded-lg ${getRiskColor(overallRisk.level)}`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Overall Risk Assessment</h3>
                   <p className="text-sm opacity-90">
                     Based on {attendance.length} attendance records
                   </p>
@@ -166,7 +172,7 @@ export default function StudentReportsPage() {
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm opacity-75">Trend</p>
-                  <p className="text-lg font-semibold">{getTrendDirection(overallRisk.trend)}</p>
+                  <p className="text-lg font-semibold">{getTrendDirection(overallRisk.breakdown.recentTrendSlope ?? 0)}</p>
                 </div>
                 <div>
                   <p className="text-sm opacity-75">Attendance Rate</p>
@@ -189,7 +195,7 @@ export default function StudentReportsPage() {
             title="Courses Enrolled"
             value={courseReports.length.toString()}
             icon="🏫"
-            color="purple"
+            color="yellow"
           />
           <StatCard
             title="Highest Risk Course"
@@ -200,9 +206,7 @@ export default function StudentReportsPage() {
         </div>
 
         {/* Course Reports */}
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Reports</h3>
+        <Card title="Course Reports">
             {courseReports.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-600">No course data available</p>
@@ -247,14 +251,12 @@ export default function StudentReportsPage() {
                 ))}
               </div>
             )}
-          </div>
         </Card>
 
         {/* Recommendations */}
         {overallRisk && overallRisk.level !== "low" && (
-          <Card>
-            <div className="p-6 bg-blue-50 rounded-lg">
-              <h3 className="text-lg font-semibold text-blue-900 mb-3">💡 Recommendations</h3>
+          <Card title="💡 Recommendations">
+            <div className="bg-blue-50 rounded-lg">
               <ul className="space-y-2 text-blue-800">
                 {overallRisk.level === "high" && (
                   <>

@@ -189,9 +189,7 @@ export default function StudentAttendancePage() {
         </div>
 
         {/* Filters */}
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
+        <Card title="Filters">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -233,15 +231,10 @@ export default function StudentAttendancePage() {
                 />
               </div>
             </div>
-          </div>
         </Card>
 
         {/* Attendance Records Table */}
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Attendance Records ({filteredAttendance.length})
-            </h3>
+        <Card title={`Attendance Records (${filteredAttendance.length})`}>
             {filteredAttendance.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-600">No attendance records found for the selected filters</p>
@@ -280,7 +273,6 @@ export default function StudentAttendancePage() {
                 </table>
               </div>
             )}
-          </div>
         </Card>
       </div>
     </DashboardLayout>

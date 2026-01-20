@@ -2,9 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   eslint: {
-    // Disable ESLint during build to allow deployment
-    // ESLint warnings won't block production build
+    // Completely disable ESLint during build to allow deployment
+    // ESLint errors/warnings won't block production builds
     ignoreDuringBuilds: true,
+  },
+  typescript: {
+    // Only check types, don't fail on unused variables
+    tsconfigPath: "./tsconfig.json",
   },
 };
 

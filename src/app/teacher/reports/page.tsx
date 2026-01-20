@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { getCoursesByTeacher, getUsersByRole, getAttendanceByStudent } from "@/lib/firebaseServices";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/ui/DashboardLayout";
 import { Card, StatCard } from "@/components/ui/Card";
 import RiskBadge from "@/components/intelligence/RiskBadge";
-import { Course, User } from "@/types";
+import { Course } from "@/types";
+import { User } from "@/types/firebase";
 import { analyzeStudentAttendance, RiskAssessment } from "@/lib/analytics";
 
 const teacherSidebarItems = [
@@ -38,7 +39,7 @@ interface ClassAnalytics {
 export default function TeacherReportsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [classAnalytics, setClassAnalytics] = useState<ClassAnalytics[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const router = useRouter();
@@ -165,8 +166,7 @@ export default function TeacherReportsPage() {
         </div>
 
         {/* Course Selection */}
-        <Card>
-          <div className="p-6">
+        <Card title="Select Class">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Select Class
             </label>
@@ -181,7 +181,6 @@ export default function TeacherReportsPage() {
                 </option>
               ))}
             </select>
-          </div>
         </Card>
 
         {selectedClassData && (
@@ -215,9 +214,7 @@ export default function TeacherReportsPage() {
             </div>
 
             {/* Attendance Stats */}
-            <Card>
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Attendance Summary</h3>
+            <Card title="Attendance Summary">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-green-50 p-4 rounded-lg">
                     <p className="text-green-700 text-sm">Present</p>
@@ -232,13 +229,10 @@ export default function TeacherReportsPage() {
                     <p className="text-2xl font-bold text-red-900">{selectedClassData.absentCount}</p>
                   </div>
                 </div>
-              </div>
             </Card>
 
             {/* Risk Distribution Chart */}
-            <Card>
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Student Risk Distribution</h3>
+            <Card title="Student Risk Distribution">
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between items-center mb-2">
@@ -291,13 +285,10 @@ export default function TeacherReportsPage() {
                     </div>
                   </div>
                 </div>
-              </div>
             </Card>
 
             {/* Student Details Table */}
-            <Card>
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Student Attendance Details</h3>
+            <Card title="Student Attendance Details">
                 {selectedClassData.studentsData.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-gray-600">No student data available</p>
@@ -317,7 +308,7 @@ export default function TeacherReportsPage() {
                         {selectedClassData.studentsData.map((data, idx) => (
                           <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="py-3 px-4">
-                              <p className="font-medium text-gray-900">{data.student.displayName || "Unknown"}</p>
+                              <p className="font-medium text-gray-900">{data.student.name || "Unknown"}</p>
                               <p className="text-xs text-gray-600">{data.student.email}</p>
                             </td>
                             <td className="py-3 px-4">
@@ -349,7 +340,6 @@ export default function TeacherReportsPage() {
                     </table>
                   </div>
                 )}
-              </div>
             </Card>
           </>
         )}
